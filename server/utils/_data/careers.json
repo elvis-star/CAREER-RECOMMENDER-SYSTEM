@@ -1,0 +1,236 @@
+[
+  {
+    "title": "Computer Science",
+    "category": "Technology",
+    "description": "Computer Science involves the study of computers and computational systems, including theory, design, development, and application of software and software systems.",
+    "keySubjects": ["Mathematics", "Physics", "Computer Studies"],
+    "requiredGrades": {
+      "Mathematics": "B+",
+      "Physics": "B"
+    },
+    "minimumMeanGrade": "B+",
+    "marketDemand": "Very High",
+    "jobProspects": [
+      "Software Developer",
+      "Systems Analyst",
+      "Data Scientist",
+      "AI Engineer",
+      "DevOps Engineer"
+    ],
+    "salary": {
+      "entry": "KES 60,000 - 80,000",
+      "mid": "KES 120,000 - 180,000",
+      "senior": "KES 250,000+"
+    },
+    "programDuration": "4 years",
+    "skillsRequired": [
+      "Programming",
+      "Problem Solving",
+      "Analytical Thinking",
+      "Teamwork",
+      "Communication"
+    ],
+    "careerPath": {
+      "entryLevel": {
+        "roles": ["Junior Developer", "Graduate Trainee", "Research Assistant"],
+        "experience": "0-2 years",
+        "description": "Focus on building technical skills and gaining practical experience in the field."
+      },
+      "midLevel": {
+        "roles": ["Senior Developer", "Team Lead", "Project Manager"],
+        "experience": "3-5 years",
+        "description": "Take on more responsibility and begin to specialize in specific areas of expertise."
+      },
+      "seniorLevel": {
+        "roles": ["Technical Director", "Department Head", "Consultant"],
+        "experience": "6-10 years",
+        "description": "Lead teams, make strategic decisions, and mentor junior professionals."
+      },
+      "executiveLevel": {
+        "roles": ["Chief Technology Officer", "VP of Engineering", "Director"],
+        "experience": "10+ years",
+        "description": "Shape organizational strategy and drive innovation at the highest levels."
+      }
+    },
+    "certifications": [
+      {
+        "name": "AWS Certified Solutions Architect",
+        "provider": "Amazon Web Services",
+        "description": "Validates expertise in designing distributed systems on AWS."
+      },
+      {
+        "name": "Certified Information Systems Security Professional",
+        "provider": "(ISC)²",
+        "description": "Demonstrates expertise in information security."
+      }
+    ],
+    "industryTrends": [
+      "Artificial Intelligence and Machine Learning",
+      "Cloud Computing",
+      "Cybersecurity",
+      "Big Data Analytics",
+      "Internet of Things (IoT)"
+    ],
+    "featured": true
+  },
+  {
+    "title": "Electrical Engineering",
+    "category": "Engineering",
+    "description": "Electrical Engineering focuses on the study and application of electricity, electronics, and electromagnetism to design and develop electrical systems and equipment.",
+    "keySubjects": ["Mathematics", "Physics", "Chemistry"],
+    "requiredGrades": {
+      "Mathematics": "B+",
+      "Physics": "B+"
+    },
+    "minimumMeanGrade": "B",
+    "marketDemand": "High",
+    "jobProspects": [
+      "Electrical Engineer",
+      "Power Systems Engineer",
+      "Control Systems Engineer",
+      "Electronics Engineer",
+      "Telecommunications Engineer"
+    ],
+    "salary": {
+      "entry": "KES 55,000 - 75,000",
+      "mid": "KES 100,000 - 150,000",
+      "senior": "KES 200,000+"
+    },
+    "programDuration": "5 years",
+    "skillsRequired": [
+      "Circuit Design",
+      "Problem Solving",
+      "Technical Drawing",
+      "Mathematics",
+      "Computer Skills"
+    ],
+    "careerPath": {
+      "entryLevel": {
+        "roles": [
+          "Junior Engineer",
+          "Graduate Engineer",
+          "Technical Assistant"
+        ],
+        "experience": "0-2 years",
+        "description": "Focus on building technical skills and understanding industry standards."
+      },
+      "midLevel": {
+        "roles": ["Senior Engineer", "Project Engineer", "Team Lead"],
+        "experience": "3-6 years",
+        "description": "Lead small projects and specialize in specific areas of electrical engineering."
+      },
+      "seniorLevel": {
+        "roles": ["Principal Engineer", "Engineering Manager", "Consultant"],
+        "experience": "7-12 years",
+        "description": "Oversee complex projects and provide technical leadership."
+      },
+      "executiveLevel": {
+        "roles": ["Chief Engineer", "Technical Director", "VP of Engineering"],
+        "experience": "12+ years",
+        "description": "Set technical direction and strategy for the organization."
+      }
+    },
+    "certifications": [
+      {
+        "name": "Professional Engineer (PE)",
+        "provider": "Engineering Board of Kenya",
+        "description": "Licensed professional engineer certification."
+      },
+      {
+        "name": "Certified Electrical Safety Professional",
+        "provider": "NFPA",
+        "description": "Certification in electrical safety standards and practices."
+      }
+    ],
+    "industryTrends": [
+      "Renewable Energy Systems",
+      "Smart Grid Technology",
+      "Electric Vehicles",
+      "Automation and Control Systems",
+      "IoT and Connected Devices"
+    ],
+    "featured": true
+  },
+  {
+    "title": "Medicine",
+    "category": "Healthcare",
+    "description": "Medicine involves the study, diagnosis, treatment, and prevention of disease and injury in humans through the application of scientific knowledge and clinical practice.",
+    "keySubjects": ["Biology", "Chemistry", "Mathematics"],
+    "requiredGrades": {
+      "Biology": "A-",
+      "Chemistry": "A-"
+    },
+    "minimumMeanGrade": "A-",
+    "marketDemand": "Very High",
+    "jobProspects": [
+      "Medical Doctor",
+      "Surgeon",
+      "Medical Researcher",
+      "Specialist Physician",
+      "Public Health Officer"
+    ],
+    "salary": {
+      "entry": "KES 80,000 - 100,000",
+      "mid": "KES 150,000 - 250,000",
+      "senior": "KES 300,000+"
+    },
+    "programDuration": "6 years",
+    "skillsRequired": [
+      "Clinical Skills",
+      "Communication",
+      "Empathy",
+      "Critical Thinking",
+      "Decision Making"
+    ],
+    "careerPath": {
+      "entryLevel": {
+        "roles": ["Medical Intern", "Medical Officer", "General Practitioner"],
+        "experience": "0-3 years",
+        "description": "Complete internship and gain foundational clinical experience."
+      },
+      "midLevel": {
+        "roles": [
+          "Resident Doctor",
+          "Specialist in Training",
+          "Medical Officer Special Grade"
+        ],
+        "experience": "4-8 years",
+        "description": "Specialize in a specific field of medicine through residency programs."
+      },
+      "seniorLevel": {
+        "roles": ["Specialist Physician", "Consultant", "Department Head"],
+        "experience": "9-15 years",
+        "description": "Practice as a specialist and take on leadership roles in healthcare institutions."
+      },
+      "executiveLevel": {
+        "roles": [
+          "Chief Medical Officer",
+          "Hospital Director",
+          "Medical Director"
+        ],
+        "experience": "15+ years",
+        "description": "Lead healthcare institutions and shape healthcare policy."
+      }
+    },
+    "certifications": [
+      {
+        "name": "Medical License",
+        "provider": "Kenya Medical Practitioners and Dentists Council",
+        "description": "Required license to practice medicine in Kenya."
+      },
+      {
+        "name": "Specialty Board Certification",
+        "provider": "Various Medical Boards",
+        "description": "Certification in medical specialties like surgery, pediatrics, etc."
+      }
+    ],
+    "industryTrends": [
+      "Telemedicine",
+      "Precision Medicine",
+      "AI in Healthcare",
+      "Preventive Healthcare",
+      "Global Health Initiatives"
+    ],
+    "featured": true
+  }
+]

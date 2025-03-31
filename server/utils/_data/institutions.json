@@ -1,0 +1,246 @@
+[
+  {
+    "name": "University of Nairobi",
+    "type": "University",
+    "location": {
+      "address": "University Way",
+      "city": "Nairobi",
+      "county": "Nairobi",
+      "country": "Kenya",
+      "coordinates": {
+        "latitude": -1.2921,
+        "longitude": 36.8219
+      }
+    },
+    "description": "The University of Nairobi is the largest university in Kenya. Through the years, the university has maintained its commitment to excellence and has established itself as the regional leader in academic, research and development.",
+    "website": "https://www.uonbi.ac.ke",
+    "contact": {
+      "email": "info@uonbi.ac.ke",
+      "phone": "+254 20 4910000",
+      "socialMedia": {
+        "facebook": "https://www.facebook.com/uonbi",
+        "twitter": "https://twitter.com/uonbi",
+        "instagram": "https://www.instagram.com/uonbi"
+      }
+    },
+    "programs": [
+      {
+        "name": "Bachelor of Science in Computer Science",
+        "level": "Bachelors",
+        "duration": "4 years",
+        "description": "This program provides students with a strong foundation in computer science theory and practice, preparing them for careers in software development, systems analysis, and more.",
+        "entryRequirements": {
+          "minimumGrade": "B+",
+          "specificSubjects": [
+            {
+              "subject": "Mathematics",
+              "grade": "B+"
+            },
+            {
+              "subject": "Physics",
+              "grade": "B"
+            }
+          ],
+          "additionalRequirements": ["KCSE Certificate", "National ID"]
+        },
+        "tuitionFees": "KES 180,000 per year"
+      },
+      {
+        "name": "Bachelor of Medicine and Bachelor of Surgery (MBChB)",
+        "level": "Bachelors",
+        "duration": "6 years",
+        "description": "This program trains students to become medical doctors, providing comprehensive education in medical sciences and clinical practice.",
+        "entryRequirements": {
+          "minimumGrade": "A-",
+          "specificSubjects": [
+            {
+              "subject": "Biology",
+              "grade": "A-"
+            },
+            {
+              "subject": "Chemistry",
+              "grade": "A-"
+            },
+            {
+              "subject": "Mathematics or Physics",
+              "grade": "B+"
+            }
+          ],
+          "additionalRequirements": [
+            "KCSE Certificate",
+            "National ID",
+            "Medical Examination"
+          ]
+        },
+        "tuitionFees": "KES 600,000 per year"
+      },
+      {
+        "name": "Bachelor of Engineering (Electrical)",
+        "level": "Bachelors",
+        "duration": "5 years",
+        "description": "This program prepares students for careers in electrical engineering, focusing on power systems, electronics, telecommunications, and control systems.",
+        "entryRequirements": {
+          "minimumGrade": "B+",
+          "specificSubjects": [
+            {
+              "subject": "Mathematics",
+              "grade": "B+"
+            },
+            {
+              "subject": "Physics",
+              "grade": "B+"
+            },
+            {
+              "subject": "Chemistry",
+              "grade": "B"
+            }
+          ],
+          "additionalRequirements": ["KCSE Certificate", "National ID"]
+        },
+        "tuitionFees": "KES 200,000 per year"
+      }
+    ],
+    "rankings": {
+      "national": 1,
+      "international": 801,
+      "year": 2023
+    },
+    "facilities": [
+      "Libraries",
+      "Laboratories",
+      "Sports Facilities",
+      "Student Center",
+      "Medical Center",
+      "Accommodation"
+    ],
+    "accreditation": [
+      "Commission for University Education (CUE)",
+      "Engineering Board of Kenya",
+      "Kenya Medical Practitioners and Dentists Council"
+    ],
+    "establishedYear": 1970,
+    "featured": true
+  },
+  {
+    "name": "Strathmore University",
+    "type": "University",
+    "location": {
+      "address": "Ole Sangale Road, Madaraka",
+      "city": "Nairobi",
+      "county": "Nairobi",
+      "country": "Kenya",
+      "coordinates": {
+        "latitude": -1.3106,
+        "longitude": 36.8141
+      }
+    },
+    "description": "Strathmore University is a leading private university in Kenya known for its excellence in academic standards, professionalism, and character development.",
+    "website": "https://www.strathmore.edu",
+    "contact": {
+      "email": "admissions@strathmore.edu",
+      "phone": "+254 703 034000",
+      "socialMedia": {
+        "facebook": "https://www.facebook.com/StrathmoreUniversity",
+        "twitter": "https://twitter.com/StrathU",
+        "instagram": "https://www.instagram.com/strathmore_university"
+      }
+    },
+    "programs": [
+      {
+        "name": "Bachelor of Business Science in Financial Economics",
+        "level": "Bachelors",
+        "duration": "4 years",
+        "description": "This program combines business, economics, and finance to prepare students for careers in financial analysis, investment banking, and economic research.",
+        "entryRequirements": {
+          "minimumGrade": "B+",
+          "specificSubjects": [
+            {
+              "subject": "Mathematics",
+              "grade": "B+"
+            },
+            {
+              "subject": "English",
+              "grade": "B"
+            }
+          ],
+          "additionalRequirements": [
+            "KCSE Certificate",
+            "National ID",
+            "Entrance Exam"
+          ]
+        },
+        "tuitionFees": "KES 500,000 per year"
+      },
+      {
+        "name": "Bachelor of Science in Computer Science",
+        "level": "Bachelors",
+        "duration": "4 years",
+        "description": "This program provides students with a strong foundation in computer science theory and practice, with a focus on software development and innovation.",
+        "entryRequirements": {
+          "minimumGrade": "B+",
+          "specificSubjects": [
+            {
+              "subject": "Mathematics",
+              "grade": "B+"
+            },
+            {
+              "subject": "Physics or Computer Studies",
+              "grade": "B"
+            }
+          ],
+          "additionalRequirements": [
+            "KCSE Certificate",
+            "National ID",
+            "Entrance Exam"
+          ]
+        },
+        "tuitionFees": "KES 480,000 per year"
+      },
+      {
+        "name": "Bachelor of Laws (LLB)",
+        "level": "Bachelors",
+        "duration": "4 years",
+        "description": "This program prepares students for careers in law, providing comprehensive education in legal theory and practice.",
+        "entryRequirements": {
+          "minimumGrade": "A-",
+          "specificSubjects": [
+            {
+              "subject": "English",
+              "grade": "B+"
+            },
+            {
+              "subject": "History or Religious Education",
+              "grade": "B+"
+            }
+          ],
+          "additionalRequirements": [
+            "KCSE Certificate",
+            "National ID",
+            "Entrance Exam"
+          ]
+        },
+        "tuitionFees": "KES 550,000 per year"
+      }
+    ],
+    "rankings": {
+      "national": 2,
+      "international": 1001,
+      "year": 2023
+    },
+    "facilities": [
+      "Modern Library",
+      "Computer Labs",
+      "Sports Complex",
+      "Student Center",
+      "Auditorium",
+      "Cafeteria"
+    ],
+    "accreditation": [
+      "Commission for University Education (CUE)",
+      "Association of Chartered Certified Accountants (ACCA)",
+      "Chartered Institute of Management Accountants (CIMA)"
+    ],
+    "establishedYear": 1961,
+    "featured": true
+  }
+]

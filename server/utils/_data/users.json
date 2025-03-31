@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "password": "Password123!",
+    "role": "admin",
+    "userType": "admin",
+    "emailVerified": true
+  },
+  {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "Password123!",
+    "role": "user",
+    "userType": "student",
+    "school": "Nairobi High School",
+    "graduationYear": 2022,
+    "emailVerified": true
+  },
+  {
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "password": "Password123!",
+    "role": "user",
+    "userType": "student",
+    "school": "Mombasa Academy",
+    "graduationYear": 2023,
+    "emailVerified": true
+  },
+  {
+    "name": "Robert Johnson",
+    "email": "robert@example.com",
+    "password": "Password123!",
+    "role": "user",
+    "userType": "counselor",
+    "emailVerified": true
+  }
+]
