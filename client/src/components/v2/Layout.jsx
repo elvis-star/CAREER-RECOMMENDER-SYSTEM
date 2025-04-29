@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import { useEffect } from 'react';
 
 const { Content } = AntLayout;
 
@@ -19,6 +20,11 @@ const Layout = ({ children }) => {
 
   // Check if current route is landing page
   const isLandingPage = location.pathname === '/';
+
+  // Scroll to top whenever location changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <AntLayout

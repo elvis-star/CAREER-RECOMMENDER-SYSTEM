@@ -574,7 +574,7 @@ const Landing = () => {
               </Col>
               <Col xs={24} md={10} className="hidden md:block">
                 <img
-                  src="/placeholder.svg?height=300&width=400"
+                  src="/students-graduation.webp?height=300&width=400"
                   alt="Students celebrating graduation"
                   className="rounded-lg w-full h-auto object-cover shadow-lg transform rotate-2"
                 />

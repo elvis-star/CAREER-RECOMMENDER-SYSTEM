@@ -11,6 +11,38 @@ export const getRecommendations = async (results) => {
   }
 };
 
+// Get career recommendations based on KCSE results
+export const updateRecommendations = async (results) => {
+  try {
+    const response = await api.put(
+      `/recommendations/update/${results.id}`,
+      results
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get User career recommendations
+export const fetchRecommendationsForUser = async (results) => {
+  try {
+    const response = await api.get('/recommendations', { results });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+// Get career recommendations Logged In User History
+export const fetchRecommendationHistoryForUser = async (results) => {
+  try {
+    const response = await api.get('/recommendations/history', { results });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get detailed information about a specific career
 export const getCareerDetails = async (careerId) => {
   try {

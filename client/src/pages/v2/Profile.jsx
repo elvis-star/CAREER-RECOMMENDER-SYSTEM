@@ -220,7 +220,7 @@ const Profile = () => {
   const onFinish = async (values) => {
     const profileData = {
       ...values,
-      profileImage: profileImageUrl,
+      avatar: profileImageUrl,
     };
     updateProfileMutation.mutate(profileData);
   };

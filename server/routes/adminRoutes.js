@@ -12,6 +12,7 @@ import {
   getUserStatsByType,
   getRecommendationStats,
   updateSystemSettings,
+  verifyAdminInvitation,
 } from '../controllers/adminController.js';
 import { getAnalyticsData } from '../controllers/analyticsController.js';
 import { protect, authorize } from '../middleware/auth.js';
@@ -19,6 +20,8 @@ import { protect, authorize } from '../middleware/auth.js';
 const router = express.Router();
 
 // Protect all routes
+
+router.post('/accept-invitation/:token', acceptAdminInvitation);
 router.use(protect);
 router.use(authorize('admin'));
 
@@ -43,6 +46,6 @@ router.get('/activity', getActivityLogs);
 
 // Admin invitation
 router.post('/invite', createAdminInvitation);
-router.post('/accept-invitation/:token', acceptAdminInvitation);
+router.get('/verify-invitation/:token', verifyAdminInvitation);
 
 export default router;

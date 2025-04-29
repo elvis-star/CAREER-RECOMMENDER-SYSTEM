@@ -223,6 +223,31 @@ const emailTemplates = {
     </a>
   </div>
 `,
+  adminInvitation: (data) => `
+  <h2 style="color: #333; text-align: center;">Admin Invitation</h2>
+  <p style="color: #555; font-size: 16px;">Hello ${data.name},</p>
+  <p style="color: #555; font-size: 16px;">
+    You have been invited by ${data.inviterName} to join the Career Recommender System as an administrator.
+  </p>
+  <p style="color: #555; font-size: 16px;">
+    As an administrator, you will have access to manage users, careers, institutions, and system settings.
+  </p>
+  <p style="color: #555; font-size: 16px;">
+    To accept this invitation and create your admin account, please click the button below:
+  </p>
+  <div style="text-align: center; margin: 20px 0;">
+    <a href="${data.invitationURL}" 
+       style="background-color: #0080ff; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+      Accept Invitation
+    </a>
+  </div>
+  <p style="color: #555; font-size: 14px;">
+    This invitation link will expire in 7 days.
+  </p>
+  <p style="color: #555; font-size: 14px;">
+    If you did not expect this invitation or believe it was sent in error, please ignore this email.
+  </p>
+`,
 };
 
 // Send email via Mailjet
@@ -415,23 +440,10 @@ export const sendAdminInvitation = async (
   invitationURL,
   inviterName
 ) => {
-  const subject = "You've been invited to join as an administrator";
-
-  const html = `
-    <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-      <h2 style="color: #0080ff; text-align: center;">Admin Invitation</h2>
-      <p>Hello ${name},</p>
-      <p>You have been invited by ${inviterName} to join the Career Recommender System as an administrator.</p>
-      <p>As an administrator, you will have access to manage users, careers, institutions, and system settings.</p>
-      <p>To accept this invitation and create your admin account, please click the button below:</p>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${invitationURL}" style="background-color: #0080ff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Accept Invitation</a>
-      </div>
-      <p>This invitation link will expire in 7 days.</p>
-      <p>If you did not expect this invitation or believe it was sent in error, please ignore this email.</p>
-      <p>Thank you,<br>Career Recommender System Team</p>
-    </div>
-  `;
-
-  await sendEmail(email, subject, html);
+  return sendEmail({
+    email,
+    subject: "You've been invited to join as an administrator",
+    template: 'adminInvitation',
+    templateData: { name, invitationURL, inviterName },
+  });
 };

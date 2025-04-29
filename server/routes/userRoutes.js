@@ -32,6 +32,8 @@ router.get('/saved-careers', getSavedCareers);
 router.post('/kcse-results', saveKcseResults);
 router.get('/kcse-results', getKcseResults);
 
+router.get('/:id', protect, getUser);
+
 // Admin only routes
 router.use(authorize('admin'));
 router.route('/').get(getUsers).post(createUser);

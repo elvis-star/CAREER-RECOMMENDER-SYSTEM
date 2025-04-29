@@ -22,6 +22,8 @@ import {
   Avatar,
   Breadcrumb,
   Badge,
+  Rate,
+  ConfigProvider,
 } from 'antd';
 import {
   SearchOutlined,
@@ -30,13 +32,15 @@ import {
   BookOutlined,
   GlobalOutlined,
   StarOutlined,
-  StarFilled,
   PhoneOutlined,
   MailOutlined,
   TeamOutlined,
+  FilterOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { fetchInstitutions } from '../../services/api';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -44,12 +48,18 @@ const { Search } = Input;
 const { TabPane } = Tabs;
 
 const Institutions = () => {
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === 'dark';
+
+  // State for filters and pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [type, setType] = useState('');
   const [location, setLocation] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(9);
+  const [activeTab, setActiveTab] = useState('all');
+  const [filtersVisible, setFiltersVisible] = useState(false);
 
   // Fetch institutions with filters
   const {
@@ -104,9 +114,37 @@ const Institutions = () => {
   const handlePageChange = (page, pageSize) => {
     setCurrentPage(page);
     setPageSize(pageSize);
+    // Scroll to top when changing page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Mock data for institution types
+  // Handle tab change
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    if (key !== 'all') {
+      setType(key);
+    } else {
+      setType('');
+    }
+    setCurrentPage(1);
+  };
+
+  // Toggle filters visibility on mobile
+  const toggleFilters = () => {
+    setFiltersVisible(!filtersVisible);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setType('');
+    setLocation('');
+    setSortBy('name');
+    setCurrentPage(1);
+    setActiveTab('all');
+  };
+
+  // Institution types
   const institutionTypes = [
     'University',
     'College',
@@ -117,7 +155,7 @@ const Institutions = () => {
     'Business School',
   ];
 
-  // Mock data for locations
+  // Locations
   const locations = [
     'Nairobi',
     'Mombasa',
@@ -130,8 +168,8 @@ const Institutions = () => {
     'Garissa',
   ];
 
-  // Mock data for featured institutions (in a real app, this would come from the API)
-  const featuredInstitutions = [
+  // Fallback data for when API returns empty
+  const fallbackInstitutions = [
     {
       _id: '1',
       name: 'University of Nairobi',
@@ -188,90 +226,136 @@ const Institutions = () => {
     },
   ];
 
+  // Get featured institutions from API data or fallback
+  const getFeaturedInstitutions = () => {
+    if (institutionsData?.data && institutionsData.data.length > 0) {
+      // Filter featured institutions from API data
+      return institutionsData.data.filter((inst) => inst.featured).slice(0, 3);
+    }
+    // Use fallback data if no API data
+    return fallbackInstitutions;
+  };
+
+  // Get all institutions from API data or fallback
+  const getAllInstitutions = () => {
+    if (institutionsData?.data && institutionsData.data.length > 0) {
+      return institutionsData.data;
+    }
+    // Only use fallback if we're not loading and there's no error
+    if (
+      !isLoading &&
+      !isError &&
+      (!institutionsData || institutionsData.data?.length === 0)
+    ) {
+      return fallbackInstitutions;
+    }
+    return [];
+  };
+
   // Render institution card
   const renderInstitutionCard = (institution) => (
-    <Col xs={24} sm={12} lg={8} key={institution._id}>
-      <Card hoverable className="h-full">
-        <div className="flex flex-col h-full">
-          <div className="flex items-center mb-4">
-            <Avatar
-              src={institution.logo}
-              size={64}
-              icon={<BankOutlined />}
-              className="mr-4"
-            />
-            <div>
-              <Title level={4} className="mb-0">
-                {institution.name}
-              </Title>
-              <Space>
-                <Tag color="blue">{institution.type}</Tag>
-                {institution.featured && (
-                  <Badge status="success" text="Featured" />
-                )}
-              </Space>
-            </div>
+    <Col xs={24} sm={12} lg={8} key={institution._id} className="mb-4">
+      <Card
+        hoverable
+        className="h-full transition-all duration-300 hover:shadow-lg dark:bg-gray-800 dark:border-gray-700"
+      >
+        <div className="flex items-center p-4 border-b dark:border-gray-700">
+          <Avatar
+            src={institution.logo}
+            size={64}
+            icon={<BankOutlined />}
+            className="mr-4"
+          />
+          <div>
+            <Title level={4} className="mb-1 dark:text-gray-100">
+              {institution.name}
+            </Title>
+            <Space>
+              <Tag color="blue">{institution.type}</Tag>
+              {institution.featured && (
+                <Badge
+                  status="success"
+                  text={<span className="dark:text-gray-300">Featured</span>}
+                />
+              )}
+            </Space>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <div className="flex items-center mb-3 text-sm dark:text-gray-400">
+            <EnvironmentOutlined className="mr-1 text-blue-500" />
+            <span>
+              {institution.location?.city}, {institution.location?.county}
+            </span>
           </div>
 
-          <Space className="mb-2">
-            <EnvironmentOutlined />
-            <Text>
-              {institution.location?.city}, {institution.location?.county}
-            </Text>
-          </Space>
-
-          <Paragraph
-            className="text-gray-500 mb-4 flex-grow"
-            ellipsis={{ rows: 3 }}
-          >
+          <Paragraph ellipsis={{ rows: 3 }} className="mb-4 dark:text-gray-300">
             {institution.description ||
               'A leading educational institution offering quality programs.'}
           </Paragraph>
 
           <div className="mb-3">
-            <Text strong>Programs:</Text>
-            <div className="flex flex-wrap gap-1 mt-1">
+            <Text strong className="block mb-1 dark:text-gray-200">
+              Programs:
+            </Text>
+            <div className="flex flex-wrap gap-1">
               {institution.programs?.slice(0, 3).map((program, index) => (
-                <Tag key={index}>{program.name}</Tag>
+                <Tag
+                  key={index}
+                  className="dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+                >
+                  {program.name}
+                </Tag>
               ))}
               {institution.programs?.length > 3 && (
-                <Tag>+{institution.programs.length - 3} more</Tag>
+                <Tag className="dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                  +{institution.programs.length - 3} more
+                </Tag>
               )}
             </div>
           </div>
 
           {institution.rating && (
-            <div className="mb-3">
-              <Space>
-                <Text strong>Rating:</Text>
-                <Space>
-                  {[...Array(Math.floor(institution.rating))].map((_, i) => (
-                    <StarFilled key={i} className="text-yellow-500" />
-                  ))}
-                  {institution.rating % 1 !== 0 && (
-                    <StarOutlined className="text-yellow-500" />
-                  )}
-                  <Text>{institution.rating.toFixed(1)}</Text>
-                </Space>
-              </Space>
+            <div className="flex items-center mb-3">
+              <Text strong className="mr-2 dark:text-gray-200">
+                Rating:
+              </Text>
+              <Rate
+                disabled
+                allowHalf
+                defaultValue={institution.rating}
+                className="text-sm"
+              />
+              <Text className="ml-1 dark:text-gray-300">
+                {institution.rating.toFixed(1)}
+              </Text>
             </div>
           )}
 
-          <Divider className="my-3" />
+          <Divider className="my-3 dark:border-gray-700" />
 
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <Link to={`/institutions/${institution._id}`}>
-              <Button type="primary">View Details</Button>
+              <Button type="primary" icon={<EyeOutlined />}>
+                View Details
+              </Button>
             </Link>
             <Space>
               {institution.contact?.phone && (
                 <Tooltip title={institution.contact.phone}>
-                  <Button icon={<PhoneOutlined />} />
+                  <Button
+                    icon={<PhoneOutlined />}
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
+                  />
                 </Tooltip>
               )}
               {institution.contact?.email && (
                 <Tooltip title={institution.contact.email}>
-                  <Button icon={<MailOutlined />} />
+                  <Button
+                    icon={<MailOutlined />}
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
+                  />
                 </Tooltip>
               )}
             </Space>
@@ -282,220 +366,313 @@ const Institutions = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <Breadcrumb className="mb-4">
-        <Breadcrumb.Item>
-          <Link to="/">Home</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Resources</Breadcrumb.Item>
-        <Breadcrumb.Item>Institutions</Breadcrumb.Item>
-      </Breadcrumb>
+    <ConfigProvider
+      theme={{
+        algorithm: isDarkMode
+          ? ConfigProvider.darkAlgorithm
+          : ConfigProvider.defaultAlgorithm,
+      }}
+    >
+      <div className="max-w-7xl mx-auto transition-colors duration-300">
+        <Breadcrumb className="mb-4">
+          <Breadcrumb.Item>
+            <Link
+              to="/"
+              className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Home
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item className="dark:text-gray-400">
+            Resources
+          </Breadcrumb.Item>
+          <Breadcrumb.Item className="dark:text-gray-300">
+            Institutions
+          </Breadcrumb.Item>
+        </Breadcrumb>
 
-      <div className="text-center mb-12">
-        <Title>Universities & Colleges</Title>
-        <Paragraph className="text-lg text-gray-500 max-w-3xl mx-auto">
-          Explore universities, colleges, and other educational institutions
-          offering programs in your desired field. Find the perfect institution
-          to pursue your career goals.
-        </Paragraph>
-      </div>
-
-      {/* Search and Filters */}
-      <Card className="mb-8">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-grow">
-            <Search
-              placeholder="Search institutions..."
-              allowClear
-              enterButton={<SearchOutlined />}
-              size="large"
-              onSearch={handleSearch}
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Select
-              placeholder="Institution Type"
-              style={{ minWidth: 150 }}
-              onChange={handleTypeChange}
-              value={type || undefined}
-              allowClear
-            >
-              {institutionTypes.map((type) => (
-                <Option key={type} value={type}>
-                  {type}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Location"
-              style={{ minWidth: 150 }}
-              onChange={handleLocationChange}
-              value={location || undefined}
-              allowClear
-            >
-              {locations.map((location) => (
-                <Option key={location} value={location}>
-                  {location}
-                </Option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Sort By"
-              style={{ minWidth: 120 }}
-              onChange={handleSortChange}
-              value={sortBy}
-              defaultValue="name"
-            >
-              <Option value="name">Name (A-Z)</Option>
-              <Option value="-name">Name (Z-A)</Option>
-              <Option value="-views">Most Viewed</Option>
-              <Option value="-rating">Highest Rated</Option>
-            </Select>
-          </div>
+        <div className="text-center mb-12">
+          <Title className="dark:text-white">Universities & Colleges</Title>
+          <Paragraph className="max-w-3xl mx-auto dark:text-gray-300">
+            Explore universities, colleges, and other educational institutions
+            offering programs in your desired field. Find the perfect
+            institution to pursue your career goals.
+          </Paragraph>
         </div>
-      </Card>
 
-      {/* Quick Links */}
-      <div className="mb-8">
-        <Row gutter={[16, 16]}>
+        {/* Search and Filters */}
+        <Card className="mb-8 dark:bg-gray-800 dark:border-gray-700">
+          <div className="flex flex-col gap-4">
+            <div className="w-full">
+              <Search
+                placeholder="Search institutions..."
+                allowClear
+                enterButton={<SearchOutlined />}
+                size="large"
+                onSearch={handleSearch}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="dark:bg-gray-700"
+              />
+            </div>
+
+            <div className="md:hidden">
+              <Button
+                icon={<FilterOutlined />}
+                onClick={toggleFilters}
+                type={filtersVisible ? 'primary' : 'default'}
+                className="w-full"
+              >
+                Filters
+              </Button>
+            </div>
+
+            <div
+              className={`flex flex-wrap gap-3 ${
+                filtersVisible ? 'block' : 'hidden md:flex'
+              }`}
+            >
+              <Select
+                placeholder="Institution Type"
+                style={{ minWidth: 150 }}
+                onChange={handleTypeChange}
+                value={type || undefined}
+                allowClear
+                className="dark:bg-gray-700"
+              >
+                {institutionTypes.map((type) => (
+                  <Option key={type} value={type}>
+                    {type}
+                  </Option>
+                ))}
+              </Select>
+
+              <Select
+                placeholder="Location"
+                style={{ minWidth: 150 }}
+                onChange={handleLocationChange}
+                value={location || undefined}
+                allowClear
+                className="dark:bg-gray-700"
+              >
+                {locations.map((location) => (
+                  <Option key={location} value={location}>
+                    {location}
+                  </Option>
+                ))}
+              </Select>
+
+              <Select
+                placeholder="Sort By"
+                style={{ minWidth: 150 }}
+                onChange={handleSortChange}
+                value={sortBy}
+                defaultValue="name"
+                className="dark:bg-gray-700"
+              >
+                <Option value="name">Name (A-Z)</Option>
+                <Option value="-name">Name (Z-A)</Option>
+                <Option value="-views">Most Viewed</Option>
+                <Option value="-rating">Highest Rated</Option>
+              </Select>
+
+              <Button
+                onClick={clearFilters}
+                className="dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+              >
+                Clear Filters
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Quick Links */}
+        <Row gutter={[16, 16]} className="mb-8">
           <Col xs={24} sm={8}>
-            <Card hoverable className="text-center h-full">
-              <GlobalOutlined className="text-3xl text-blue-500 mb-2" />
-              <Title level={4}>Top Universities</Title>
-              <Text type="secondary">Explore Kenya's leading universities</Text>
+            <Card
+              hoverable
+              className="text-center h-full transition-all duration-300 hover:shadow-md dark:bg-gray-800 dark:border-gray-700"
+            >
+              <GlobalOutlined className="text-4xl text-blue-500 mb-3" />
+              <Title level={4} className="dark:text-gray-100">
+                Top Universities
+              </Title>
+              <Text className="dark:text-gray-400">
+                Explore Kenya's leading universities
+              </Text>
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card hoverable className="text-center h-full">
-              <BookOutlined className="text-3xl text-green-500 mb-2" />
-              <Title level={4}>Program Search</Title>
-              <Text type="secondary">
+            <Card
+              hoverable
+              className="text-center h-full transition-all duration-300 hover:shadow-md dark:bg-gray-800 dark:border-gray-700"
+            >
+              <BookOutlined className="text-4xl text-green-500 mb-3" />
+              <Title level={4} className="dark:text-gray-100">
+                Program Search
+              </Title>
+              <Text className="dark:text-gray-400">
                 Find institutions by specific programs
               </Text>
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card hoverable className="text-center h-full">
-              <TeamOutlined className="text-3xl text-purple-500 mb-2" />
-              <Title level={4}>Virtual Tours</Title>
-              <Text type="secondary">Take virtual tours of campuses</Text>
+            <Card
+              hoverable
+              className="text-center h-full transition-all duration-300 hover:shadow-md dark:bg-gray-800 dark:border-gray-700"
+            >
+              <TeamOutlined className="text-4xl text-purple-500 mb-3" />
+              <Title level={4} className="dark:text-gray-100">
+                Virtual Tours
+              </Title>
+              <Text className="dark:text-gray-400">
+                Take virtual tours of campuses
+              </Text>
             </Card>
           </Col>
         </Row>
-      </div>
 
-      {/* Featured Institutions */}
-      <div className="mb-8">
-        <Title level={2} className="mb-6">
-          <Space>
-            <StarFilled className="text-yellow-500" />
-            <span>Featured Institutions</span>
-          </Space>
-        </Title>
-        <Row gutter={[16, 16]}>
-          {featuredInstitutions.map(renderInstitutionCard)}
-        </Row>
-      </div>
-
-      {/* All Institutions */}
-      <div className="mb-8">
-        <Divider>
-          <Space>
-            <BankOutlined />
-            <span>All Institutions</span>
-          </Space>
-        </Divider>
-
-        <Tabs defaultActiveKey="all">
-          <TabPane tab="All Institutions" key="all" />
-          <TabPane tab="Universities" key="university" />
-          <TabPane tab="Colleges" key="college" />
-          <TabPane tab="Technical Institutes" key="technical" />
-          <TabPane tab="Vocational Schools" key="vocational" />
-        </Tabs>
-
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Spin size="large" />
+        {/* Featured Institutions */}
+        <div className="mb-12">
+          <div className="flex items-center mb-6">
+            <StarOutlined className="text-xl text-yellow-500 mr-2" />
+            <Title level={2} className="mb-0 dark:text-white">
+              Featured Institutions
+            </Title>
           </div>
-        ) : isError ? (
-          <Alert
-            type="error"
-            message="Error loading institutions"
-            description="There was a problem fetching the institution data. Please try again later."
-            className="mb-4"
-          />
-        ) : institutionsData?.data?.length === 0 ? (
-          <Empty description="No institutions found matching your criteria" />
-        ) : (
-          <>
-            <Row gutter={[16, 16]}>
-              {/* In a real app, this would use institutionsData?.data instead of featuredInstitutions */}
-              {featuredInstitutions.map(renderInstitutionCard)}
-            </Row>
+          <Row gutter={[16, 16]}>
+            {getFeaturedInstitutions().map(renderInstitutionCard)}
+          </Row>
+        </div>
 
-            <div className="mt-8 flex justify-center">
-              <Pagination
-                current={currentPage}
-                pageSize={pageSize}
-                total={institutionsData?.total || 0}
-                onChange={handlePageChange}
-                showSizeChanger
-                showQuickJumper
-                showTotal={(total) => `Total ${total} institutions`}
-              />
+        {/* All Institutions */}
+        <div className="mb-12">
+          <Divider className="dark:border-gray-700">
+            <Space>
+              <BankOutlined className="text-gray-600 dark:text-gray-400" />
+              <span className="text-gray-600 dark:text-gray-400">
+                All Institutions
+              </span>
+            </Space>
+          </Divider>
+
+          <Tabs
+            defaultActiveKey="all"
+            activeKey={activeTab}
+            onChange={handleTabChange}
+            className="mb-6 institution-tabs"
+          >
+            <TabPane tab="All Institutions" key="all" />
+            <TabPane tab="Universities" key="University" />
+            <TabPane tab="Colleges" key="College" />
+            <TabPane tab="Technical Institutes" key="Technical Institute" />
+            <TabPane tab="Vocational Schools" key="Vocational School" />
+          </Tabs>
+
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Spin size="large" />
+              <Text className="mt-4 dark:text-gray-300">
+                Loading institutions...
+              </Text>
             </div>
-          </>
-        )}
-      </div>
+          ) : isError ? (
+            <Alert
+              type="error"
+              message="Error loading institutions"
+              description="There was a problem fetching the institution data. Please try again later."
+              className="mb-4"
+            />
+          ) : getAllInstitutions().length === 0 ? (
+            <Empty
+              description={
+                <Text className="dark:text-gray-300">
+                  No institutions found matching your criteria
+                </Text>
+              }
+              className="py-12"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          ) : (
+            <>
+              <Row gutter={[16, 16]} className="mb-6">
+                {getAllInstitutions().map(renderInstitutionCard)}
+              </Row>
 
-      {/* Institution Categories */}
-      <div className="mb-12">
-        <Title level={2} className="mb-6 text-center">
-          Institution Types
-        </Title>
-        <Row gutter={[16, 16]}>
-          {institutionTypes.slice(0, 4).map((type) => (
-            <Col xs={24} sm={12} md={6} key={type}>
-              <Card
-                hoverable
-                className="text-center"
-                onClick={() => {
-                  setType(type);
-                  setCurrentPage(1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
+              <div className="flex justify-center mt-8">
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={institutionsData?.total || 0}
+                  onChange={handlePageChange}
+                  showSizeChanger
+                  showQuickJumper
+                  showTotal={(total) => `Total ${total} institutions`}
+                  className="dark:text-gray-300"
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Institution Categories */}
+        <div className="mb-12">
+          <Title level={2} className="text-center mb-6 dark:text-white">
+            Institution Types
+          </Title>
+          <Row gutter={[16, 16]}>
+            {institutionTypes.slice(0, 4).map((type) => (
+              <Col xs={24} sm={12} md={6} key={type}>
+                <Card
+                  hoverable
+                  className="text-center transition-all duration-300 hover:shadow-md hover:-translate-y-1 dark:bg-gray-800 dark:border-gray-700"
+                  onClick={() => {
+                    setType(type);
+                    setCurrentPage(1);
+                    setActiveTab(type);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <BankOutlined className="text-4xl text-blue-500 mb-3" />
+                  <Title level={4} className="dark:text-gray-100">
+                    {type}
+                  </Title>
+                  <Paragraph className="dark:text-gray-400 mb-0">
+                    Explore {type.toLowerCase()} options
+                  </Paragraph>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </div>
+
+        {/* Call to Action */}
+        <div className="rounded-lg p-8 text-center bg-blue-50 dark:bg-blue-900/20">
+          <Title level={3} className="dark:text-white">
+            Find the Right Institution for Your Career
+          </Title>
+          <Paragraph className="max-w-2xl mx-auto mb-6 dark:text-gray-300">
+            Take our career assessment to get personalized recommendations for
+            institutions that offer programs aligned with your career goals.
+          </Paragraph>
+          <Space size="large" className="flex flex-wrap justify-center gap-4">
+            <Link to="/input-results">
+              <Button type="primary" size="large">
+                Get Career Recommendations
+              </Button>
+            </Link>
+            <Link to="/contact">
+              <Button
+                size="large"
+                className="dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
               >
-                <BankOutlined className="text-3xl text-blue-500 mb-2" />
-                <Title level={4}>{type}</Title>
-                <Paragraph className="text-gray-500">
-                  Explore {type.toLowerCase()} options
-                </Paragraph>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                Contact an Advisor
+              </Button>
+            </Link>
+          </Space>
+        </div>
       </div>
-
-      {/* Call to Action */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 text-center">
-        <Title level={3}>Find the Right Institution for Your Career</Title>
-        <Paragraph className="mb-4">
-          Take our career assessment to get personalized recommendations for
-          institutions that offer programs aligned with your career goals.
-        </Paragraph>
-        <Space size="large">
-          <Link to="/input-results">
-            <Button type="primary" size="large">
-              Get Career Recommendations
-            </Button>
-          </Link>
-          <Link to="/contact">
-            <Button size="large">Contact an Advisor</Button>
-          </Link>
-        </Space>
-      </div>
-    </div>
+    </ConfigProvider>
   );
 };
 

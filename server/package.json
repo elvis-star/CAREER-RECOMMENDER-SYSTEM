@@ -9,7 +9,9 @@
     "dev": "nodemon server.js",
     "seed": "node utils/seeder.js",
     "seed:import": "node utils/seeder.js -i",
-    "seed:delete": "node utils/seeder.js -d"
+    "seed:delete": "node utils/seeder.js -d",
+    "seed-careers": "node scripts/seed-careers.js",
+    "seed-careers:force": "node scripts/seed-careers.js --force"
   },
   "keywords": [
     "career",

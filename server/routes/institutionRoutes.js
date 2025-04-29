@@ -10,6 +10,8 @@ import {
   deleteProgram,
   getInstitutionsByLocation,
   getInstitutionsByProgram,
+  updateFeaturedStatus,
+  getInstitutionStats,
 } from '../controllers/institutionController.js';
 import { protect, authorize } from '../controllers/authController.js';
 import { uploadMiddleware } from '../utils/fileUpload.js';
@@ -42,5 +44,16 @@ router
 router.post('/:id/programs', addProgram);
 router.put('/:id/programs/:programId', updateProgram);
 router.delete('/:id/programs/:programId', deleteProgram);
+
+// Featured status update route
+router.patch(
+  '/:id/featured',
+  protect,
+  authorize('admin'),
+  updateFeaturedStatus
+);
+
+// Stats route
+router.get('/stats', protect, authorize('admin'), getInstitutionStats);
 
 export default router;

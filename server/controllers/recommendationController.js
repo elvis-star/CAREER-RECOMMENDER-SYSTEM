@@ -609,3 +609,165 @@ export const updateSavedStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Update user's KCSE results and regenerate recommendations
+// @route   PUT /api/recommendations/:id
+// @access  Private
+export const updateUserRecommendations = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { results } = req.body;
+
+    if (
+      !results ||
+      !results.subjects ||
+      !Array.isArray(results.subjects) ||
+      results.subjects.length < 7
+    ) {
+      return next(
+        createError('Please provide at least 7 subjects with grades', 400)
+      );
+    }
+
+    let recommendation;
+
+    // If ID is 'current', update the most recent recommendation
+    if (id === 'current') {
+      recommendation = await Recommendation.findOne({
+        user: req.user._id,
+      }).sort('-createdAt');
+
+      if (!recommendation) {
+        return next(
+          createError('No existing recommendation found to update', 404)
+        );
+      }
+    } else {
+      // Find the specific recommendation by ID
+      recommendation = await Recommendation.findById(id);
+
+      // Check if recommendation exists
+      if (!recommendation) {
+        return next(
+          createError(`Recommendation not found with id of ${id}`, 404)
+        );
+      }
+
+      // Check if recommendation belongs to user
+      if (recommendation.user.toString() !== req.user._id.toString()) {
+        return next(
+          createError('Not authorized to update this recommendation', 401)
+        );
+      }
+    }
+
+    // Update KCSE results
+    recommendation.kcseResults = {
+      year: results.year,
+      meanGrade: results.meanGrade,
+      meanPoints: results.meanPoints,
+      subjects: results.subjects,
+    };
+
+    // Determine academic strengths
+    const strengths = determineStrengths(results.subjects);
+    recommendation.strengths = strengths;
+
+    // Get all careers
+    const careers = await Career.find();
+
+    // Calculate match scores for each career
+    const recommendations = [];
+
+    for (const career of careers) {
+      const match = calculateMatchScore(
+        {
+          year: results.year,
+          subjects: results.subjects,
+          meanGrade: results.meanGrade,
+          meanPoints: results.meanPoints,
+        },
+        career
+      );
+
+      // Only include careers with at least 50% match
+      if (match >= 50) {
+        recommendations.push({
+          career: career._id,
+          match,
+          reasons: generateReasons(
+            {
+              year: results.year,
+              subjects: results.subjects,
+              meanGrade: results.meanGrade,
+              meanPoints: results.meanPoints,
+            },
+            career,
+            match
+          ),
+          saved: false, // Reset saved status on update
+        });
+      }
+    }
+
+    // Sort recommendations by match score (descending)
+    recommendations.sort((a, b) => b.match - a.match);
+
+    // Update recommendations
+    recommendation.recommendations = recommendations;
+    recommendation.updatedAt = Date.now();
+
+    await recommendation.save();
+
+    // Update user's KCSE results
+    const user = await User.findById(req.user._id);
+    user.kcseResults = {
+      year: results.year,
+      meanGrade: results.meanGrade,
+      meanPoints: results.meanPoints,
+      subjects: results.subjects,
+    };
+    await user.save();
+
+    // Log activity
+    await Activity.create({
+      user: req.user._id,
+      action: 'update_recommendations',
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    // Populate career details for response
+    const populatedRecommendations = [];
+
+    for (const rec of recommendations.slice(0, 10)) {
+      // Limit to top 10
+      const career = await Career.findById(rec.career);
+      populatedRecommendations.push({
+        id: career._id,
+        title: career.title,
+        match: rec.match,
+        category: career.category,
+        description: career.description,
+        keySubjects: career.keySubjects,
+        institutions: career.institutions,
+        jobProspects: career.jobProspects,
+        marketDemand: career.marketDemand,
+        salary: career.salary,
+        reasons: rec.reasons,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      studentInfo: {
+        meanGrade: results.meanGrade,
+        meanPoints: results.meanPoints,
+        strengths,
+      },
+      recommendations: populatedRecommendations,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

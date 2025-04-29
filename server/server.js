@@ -47,7 +47,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // Rate limiting
 const limiter = rateLimit({
-  max: 100, // 100 requests per IP
+  max: 1000, // 100 requests per IP
   windowMs: 60 * 60 * 1000, // 1 hour
   message: 'Too many requests from this IP, please try again in an hour!',
 });
@@ -55,8 +55,12 @@ app.use('/api', limiter);
 
 // Specific rate limit for authentication routes
 const authLimiter = rateLimit({
-  max: 10, // 10 requests per IP
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  // max: 10, // 10 requests per IP
+  // windowMs: 15 * 60 * 1000, // 15 minutes
+
+  max: 50, // instead of 10
+  windowMs: 10 * 60 * 1000, // instead of 15 minutes
+
   message: 'Too many authentication attempts, please try again later',
 });
 app.use('/api/auth', authLimiter);
@@ -75,7 +79,7 @@ app.use(xss());
 // CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5174',
+    origin: [process.env.CLIENT_URL, 'http://localhost:5174'],
     credentials: true,
   })
 );

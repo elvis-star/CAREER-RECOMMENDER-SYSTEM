@@ -49,6 +49,8 @@ import AcceptInvitation from './pages/v2/admin/AcceptInvitation';
 // Components
 import Layout from './components/v2/Layout';
 import AdminLayout from './components/v2/admin/AdminLayout';
+import AdminAnalytics from './pages/v2/admin/Analytics';
+import InstitutionDetails from './pages/v2/InstitutionsDetails';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -297,6 +299,16 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/institutions/:id"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <InstitutionDetails />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Admin Routes */}
                   <Route
@@ -322,6 +334,14 @@ function App() {
                     element={
                       <AdminRoute>
                         <AdminCareers />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/analytics"
+                    element={
+                      <AdminRoute>
+                        <AdminAnalytics />
                       </AdminRoute>
                     }
                   />

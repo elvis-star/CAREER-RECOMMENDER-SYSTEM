@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Typography,
   Card,
@@ -16,21 +16,39 @@ import {
   Tooltip,
   message,
   Divider,
+  Tabs,
+  Statistic,
+  Badge,
+  Progress,
+  Empty,
+  Skeleton,
 } from 'antd';
 import {
   PlusOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
   QuestionCircleOutlined,
+  SaveOutlined,
+  EditOutlined,
+  HistoryOutlined,
+  LineChartOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
-import { ClipboardList } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ClipboardList, GraduationCap, Award, BookOpen } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRecommendations } from '../../services/recommendationService';
-import { useMutation } from '@tanstack/react-query';
+import {
+  getRecommendations,
+  updateRecommendations,
+  fetchRecommendationHistoryForUser,
+} from '../../services/recommendationService';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { getCurrentUser } from '../../services/authService';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
+const { TabPane } = Tabs;
 
 // KCSE Grading System
 const KCSE_GRADES = [
@@ -73,8 +91,9 @@ const KCSE_SUBJECTS = [
 ];
 
 const ResultsInput = () => {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const [isAddSubjectModalVisible, setIsAddSubjectModalVisible] =
@@ -86,6 +105,61 @@ const ResultsInput = () => {
     { key: 'mathematics', subject: 'mathematics', grade: '' },
   ]);
   const [meanGrade, setMeanGrade] = useState({ grade: 'N/A', points: 0 });
+  const [activeTab, setActiveTab] = useState('input');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [recommendationId, setRecommendationId] = useState(null);
+
+  // Get current user data
+  const { data: currentUserData, isLoading: userLoading } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: getCurrentUser,
+  });
+
+  const user = currentUserData?.user || authUser;
+
+  // Get recommendation history
+  const {
+    data: recommendationHistoryResponse = {},
+    isLoading: historyLoading,
+  } = useQuery({
+    queryKey: ['recommendationHistory'],
+    queryFn: fetchRecommendationHistoryForUser,
+  });
+
+  // Initialize form with user's KCSE results if available
+  useEffect(() => {
+    if (user?.kcseResults) {
+      setIsEditMode(true);
+
+      // Set form values
+      form.setFieldsValue({
+        year: user.kcseResults.year,
+      });
+
+      // Set subjects
+      const userSubjects = user.kcseResults.subjects.map((subject) => ({
+        key: subject.subject
+          .toLowerCase()
+          .replace(/\s+/g, '')
+          .replace(/&/g, ''),
+        subject: subject.subject
+          .toLowerCase()
+          .replace(/\s+/g, '')
+          .replace(/&/g, ''),
+        grade: subject.grade,
+      }));
+
+      setSubjects(userSubjects);
+
+      // Calculate mean grade
+      const calculatedMeanGrade = {
+        grade: user.kcseResults.meanGrade,
+        points: user.kcseResults.meanPoints,
+      };
+
+      setMeanGrade(calculatedMeanGrade);
+    }
+  }, [user, form]);
 
   // Calculate mean grade
   const calculateMeanGrade = (subjects) => {
@@ -180,8 +254,8 @@ const ResultsInput = () => {
     return KCSE_SUBJECTS.filter((s) => !selectedSubjects.includes(s.id));
   };
 
-  // Fixed React Query v5 mutation
-  const mutation = useMutation({
+  // Create new recommendations mutation
+  const createMutation = useMutation({
     mutationFn: (data) => getRecommendations(data),
     onSuccess: (data) => {
       messageApi.success({
@@ -189,6 +263,7 @@ const ResultsInput = () => {
           'Results submitted successfully. Redirecting to your career recommendations.',
         duration: 3,
       });
+      console.log('Recommendations:', data);
 
       // Navigate to recommendations page
       navigate('/recommendations', { state: { recommendations: data } });
@@ -197,6 +272,29 @@ const ResultsInput = () => {
       messageApi.error({
         content:
           error.message || 'Error submitting results. Please try again later.',
+        duration: 5,
+      });
+    },
+  });
+
+  // Update recommendations mutation
+  const updateMutation = useMutation({
+    mutationFn: (data) => updateRecommendations(data),
+    onSuccess: (data) => {
+      messageApi.success({
+        content:
+          'Results updated successfully. Redirecting to your career recommendations.',
+        duration: 3,
+      });
+      console.log('Updated Recommendations:', data);
+
+      // Navigate to recommendations page
+      navigate('/recommendations', { state: { recommendations: data } });
+    },
+    onError: (error) => {
+      messageApi.error({
+        content:
+          error.message || 'Error updating results. Please try again later.',
         duration: 5,
       });
     },
@@ -226,8 +324,136 @@ const ResultsInput = () => {
       meanPoints: Number.parseFloat(meanGrade.points),
     };
 
-    // Submit data
-    mutation.mutate(formattedData);
+    // Submit data based on mode (create or update)
+    if (isEditMode) {
+      updateMutation.mutate({
+        id: recommendationId || 'current', // Use 'current' if no specific ID
+        results: formattedData,
+      });
+    } else {
+      createMutation.mutate({ results: formattedData });
+    }
+  };
+
+  // Get subject name from ID
+  const getSubjectName = (subjectId) => {
+    const subject = KCSE_SUBJECTS.find((s) => s.id === subjectId);
+    return subject ? subject.name : subjectId;
+  };
+
+  // Get subject category from ID
+  const getSubjectCategory = (subjectId) => {
+    const subject = KCSE_SUBJECTS.find((s) => s.id === subjectId);
+    return subject ? subject.category : 'Other';
+  };
+
+  // Get color for grade
+  const getGradeColor = (grade) => {
+    if (grade?.startsWith('A')) return 'green';
+    if (grade?.startsWith('B')) return 'blue';
+    if (grade?.startsWith('C')) return 'orange';
+    if (grade?.startsWith('D')) return 'volcano';
+    return 'red';
+  };
+
+  // Calculate profile completion based on subjects
+  const calculateProfileCompletion = () => {
+    const subjectsWithGrades = subjects.filter((s) => s.grade);
+    return Math.min(100, Math.round((subjectsWithGrades.length / 8) * 100));
+  };
+
+  // Group subjects by category
+  const getSubjectsByCategory = () => {
+    const categories = {};
+
+    subjects.forEach((subject) => {
+      if (!subject.grade) return;
+
+      const category = getSubjectCategory(subject.subject);
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+
+      categories[category].push({
+        name: getSubjectName(subject.subject),
+        grade: subject.grade,
+        points: KCSE_GRADES.find((g) => g.value === subject.grade)?.points || 0,
+      });
+    });
+
+    return categories;
+  };
+
+  // Calculate average points by category
+  const getCategoryAverages = () => {
+    const categories = getSubjectsByCategory();
+    const averages = {};
+
+    Object.keys(categories).forEach((category) => {
+      const subjects = categories[category];
+      const totalPoints = subjects.reduce((sum, subj) => sum + subj.points, 0);
+      averages[category] = (totalPoints / subjects.length).toFixed(1);
+    });
+
+    return averages;
+  };
+
+  // Determine academic strengths
+  const getAcademicStrengths = () => {
+    const averages = getCategoryAverages();
+
+    // Sort categories by average points
+    return Object.keys(averages)
+      .sort((a, b) => averages[b] - averages[a])
+      .slice(0, 3)
+      .map((category) => ({
+        category,
+        average: averages[category],
+      }));
+  };
+
+  // Get recommendation history items
+  const getRecommendationHistory = () => {
+    return recommendationHistoryResponse?.data || [];
+  };
+
+  // Load a specific recommendation
+  const loadRecommendation = (recommendation) => {
+    if (!recommendation) return;
+
+    setRecommendationId(recommendation._id);
+    setIsEditMode(true);
+
+    // Set form values
+    form.setFieldsValue({
+      year: recommendation.kcseResults.year,
+    });
+
+    // Set subjects
+    const recommendationSubjects = recommendation.kcseResults.subjects.map(
+      (subject) => ({
+        key: subject.subject
+          .toLowerCase()
+          .replace(/\s+/g, '')
+          .replace(/&/g, ''),
+        subject: subject.subject
+          .toLowerCase()
+          .replace(/\s+/g, '')
+          .replace(/&/g, ''),
+        grade: subject.grade,
+      })
+    );
+
+    setSubjects(recommendationSubjects);
+
+    // Set mean grade
+    setMeanGrade({
+      grade: recommendation.kcseResults.meanGrade,
+      points: recommendation.kcseResults.meanPoints,
+    });
+
+    // Switch to input tab
+    setActiveTab('input');
   };
 
   // Table columns
@@ -322,136 +548,499 @@ const ResultsInput = () => {
     },
   ];
 
+  // Loading state
+  const isLoading = userLoading || historyLoading;
+
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto py-8 px-4">
+        <Skeleton active />
+        <div className="mt-6">
+          <Skeleton active />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
       {contextHolder}
 
       <div className="mb-8">
-        <Title level={2}>Input Your KCSE Results</Title>
+        <Title level={2}>
+          {isEditMode ? 'Update Your KCSE Results' : 'Input Your KCSE Results'}
+        </Title>
         <Paragraph className="text-gray-500">
-          Enter your KCSE grades to get personalized career recommendations
-          based on your academic strengths.
+          {isEditMode
+            ? 'Update your KCSE grades to get refreshed career recommendations based on your academic strengths.'
+            : 'Enter your KCSE grades to get personalized career recommendations based on your academic strengths.'}
         </Paragraph>
       </div>
 
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        initialValues={{ year: new Date().getFullYear() }}
-      >
-        <Row gutter={[24, 24]}>
-          {/* Examination Details */}
-          <Col xs={24}>
-            <Card title="Examination Details">
-              <Row gutter={16}>
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="year"
-                    label="Year of Examination"
-                    rules={[
-                      { required: true, message: 'Year is required' },
-                      {
-                        type: 'number',
-                        min: 1990,
-                        max: new Date().getFullYear(),
-                        message: `Year must be between 1990 and ${new Date().getFullYear()}`,
-                        transform: (value) => Number(value),
-                      },
-                    ]}
-                  >
-                    <Input type="number" />
-                  </Form.Item>
-                </Col>
+      <Tabs activeKey={activeTab} onChange={setActiveTab}>
+        <TabPane
+          tab={
+            <span>
+              <EditOutlined /> {isEditMode ? 'Update Results' : 'Input Results'}
+            </span>
+          }
+          key="input"
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            initialValues={{ year: new Date().getFullYear() }}
+          >
+            <Row gutter={[24, 24]}>
+              {/* Examination Details */}
+              <Col xs={24}>
+                <Card title="Examination Details">
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        name="year"
+                        label="Year of Examination"
+                        rules={[
+                          { required: true, message: 'Year is required' },
+                          {
+                            type: 'number',
+                            min: 1990,
+                            max: new Date().getFullYear(),
+                            message: `Year must be between 1990 and ${new Date().getFullYear()}`,
+                            transform: (value) => Number(value),
+                          },
+                        ]}
+                      >
+                        <Input type="number" />
+                      </Form.Item>
+                    </Col>
 
-                <Col xs={24} md={12}>
-                  <Form.Item label="Mean Grade">
-                    <Row gutter={8}>
-                      <Col span={12}>
-                        <Input value={meanGrade.grade} readOnly />
-                      </Col>
-                      <Col span={8}>
-                        <Input value={meanGrade.points} readOnly />
-                      </Col>
-                      <Col span={4} className="flex items-center">
-                        <Tooltip title="Mean grade is calculated automatically based on your subject grades">
-                          <InfoCircleOutlined className="text-gray-500" />
-                        </Tooltip>
-                      </Col>
-                    </Row>
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Card>
-          </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item label="Mean Grade">
+                        <Row gutter={8}>
+                          <Col span={12}>
+                            <Input
+                              value={meanGrade.grade}
+                              readOnly
+                              addonAfter={
+                                <Tag color={getGradeColor(meanGrade.grade)}>
+                                  {meanGrade.grade}
+                                </Tag>
+                              }
+                            />
+                          </Col>
+                          <Col span={8}>
+                            <Input
+                              value={meanGrade.points}
+                              readOnly
+                              addonAfter="pts"
+                            />
+                          </Col>
+                          <Col span={4} className="flex items-center">
+                            <Tooltip title="Mean grade is calculated automatically based on your subject grades">
+                              <InfoCircleOutlined className="text-gray-500" />
+                            </Tooltip>
+                          </Col>
+                        </Row>
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                </Card>
+              </Col>
 
-          {/* Subject Grades */}
-          <Col xs={24}>
-            <Card
-              title="Subject Grades"
-              extra={
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => setIsAddSubjectModalVisible(true)}
+              {/* Subject Grades */}
+              <Col xs={24}>
+                <Card
+                  title="Subject Grades"
+                  extra={
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setIsAddSubjectModalVisible(true)}
+                    >
+                      Add Subject
+                    </Button>
+                  }
                 >
-                  Add Subject
-                </Button>
-              }
-            >
-              <Alert
-                message="Important!"
-                description="Please enter grades for at least 7 subjects, including the compulsory ones (English, Kiswahili, Mathematics)."
-                type="info"
-                showIcon
-                className="mb-4"
-              />
-
-              {subjects.length > 0 ? (
-                <Table
-                  columns={columns}
-                  dataSource={subjects}
-                  pagination={false}
-                  rowKey="key"
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <QuestionCircleOutlined
-                    style={{ fontSize: 40, color: '#ccc' }}
+                  <Alert
+                    message="Important!"
+                    description="Please enter grades for at least 7 subjects, including the compulsory ones (English, Kiswahili, Mathematics)."
+                    type="info"
+                    showIcon
                     className="mb-4"
                   />
-                  <Paragraph className="text-gray-500">
-                    No subjects added yet. Click "Add Subject" to begin.
-                  </Paragraph>
-                </div>
-              )}
 
-              <Divider />
+                  {subjects.length > 0 ? (
+                    <Table
+                      columns={columns}
+                      dataSource={subjects}
+                      pagination={false}
+                      rowKey="key"
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <QuestionCircleOutlined
+                        style={{ fontSize: 40, color: '#ccc' }}
+                        className="mb-4"
+                      />
+                      <Paragraph className="text-gray-500">
+                        No subjects added yet. Click "Add Subject" to begin.
+                      </Paragraph>
+                    </div>
+                  )}
 
-              <div className="flex items-center">
-                <InfoCircleOutlined className="text-gray-500 mr-2" />
-                <Text type="secondary">
-                  You need to enter at least 7 subjects to get accurate career
-                  recommendations.
-                </Text>
+                  <Divider />
+
+                  <div className="flex items-center">
+                    <InfoCircleOutlined className="text-gray-500 mr-2" />
+                    <Text type="secondary">
+                      You need to enter at least 7 subjects to get accurate
+                      career recommendations.
+                    </Text>
+                  </div>
+                </Card>
+              </Col>
+
+              {/* Submit Button */}
+              <Col xs={24} className="flex justify-end">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  loading={createMutation.isPending || updateMutation.isPending}
+                >
+                  {isEditMode ? (
+                    <>
+                      <SaveOutlined style={{ marginRight: 8 }} />
+                      Update Career Recommendations
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardList size={16} style={{ marginRight: 8 }} />
+                      Get Career Recommendations
+                    </>
+                  )}
+                </Button>
+              </Col>
+            </Row>
+          </Form>
+        </TabPane>
+
+        <TabPane
+          tab={
+            <span>
+              <GraduationCap size={16} style={{ marginRight: 8 }} /> Academic
+              Profile
+            </span>
+          }
+          key="profile"
+        >
+          {subjects.some((s) => s.grade) ? (
+            <Row gutter={[24, 24]}>
+              {/* Profile Summary */}
+              <Col xs={24}>
+                <Card>
+                  <Row gutter={[16, 16]}>
+                    <Col xs={24} md={8}>
+                      <Statistic
+                        title="Mean Grade"
+                        value={meanGrade.grade}
+                        suffix={`(${meanGrade.points} pts)`}
+                        valueStyle={{
+                          color:
+                            getGradeColor(meanGrade.grade) === 'green'
+                              ? '#52c41a'
+                              : '#1890ff',
+                        }}
+                      />
+                      <Divider />
+                      <Statistic
+                        title="Subjects Entered"
+                        value={subjects.filter((s) => s.grade).length}
+                        suffix={`/ ${subjects.length}`}
+                      />
+                      <Progress
+                        percent={calculateProfileCompletion()}
+                        status={
+                          calculateProfileCompletion() >= 100
+                            ? 'success'
+                            : 'active'
+                        }
+                      />
+                    </Col>
+
+                    <Col xs={24} md={16}>
+                      <Title level={5}>Academic Strengths</Title>
+                      {getAcademicStrengths().length > 0 ? (
+                        <Row gutter={[16, 16]}>
+                          {getAcademicStrengths().map((strength, index) => (
+                            <Col key={index} xs={24} sm={8}>
+                              <Card size="small" className="text-center">
+                                <Text strong>{strength.category}</Text>
+                                <div>
+                                  <Badge
+                                    count={`${strength.average} pts`}
+                                    style={{
+                                      backgroundColor:
+                                        strength.average >= 10
+                                          ? '#52c41a'
+                                          : strength.average >= 8
+                                          ? '#1890ff'
+                                          : strength.average >= 6
+                                          ? '#faad14'
+                                          : '#f5222d',
+                                    }}
+                                  />
+                                </div>
+                              </Card>
+                            </Col>
+                          ))}
+                        </Row>
+                      ) : (
+                        <Empty description="Add more subjects with grades to see your academic strengths" />
+                      )}
+                    </Col>
+                  </Row>
+                </Card>
+              </Col>
+
+              {/* Subject Analysis */}
+              <Col xs={24}>
+                <Card title="Subject Analysis">
+                  {Object.entries(getSubjectsByCategory()).length > 0 ? (
+                    <Row gutter={[16, 24]}>
+                      {Object.entries(getSubjectsByCategory()).map(
+                        ([category, subjectList]) => (
+                          <Col xs={24} md={12} lg={8} key={category}>
+                            <Card
+                              title={category}
+                              size="small"
+                              className="h-full"
+                              extra={
+                                <Tag color="blue">
+                                  {getCategoryAverages()[category]} pts
+                                </Tag>
+                              }
+                            >
+                              <Table
+                                dataSource={subjectList}
+                                columns={[
+                                  {
+                                    title: 'Subject',
+                                    dataIndex: 'name',
+                                    key: 'name',
+                                  },
+                                  {
+                                    title: 'Grade',
+                                    dataIndex: 'grade',
+                                    key: 'grade',
+                                    render: (grade) => (
+                                      <Tag color={getGradeColor(grade)}>
+                                        {grade}
+                                      </Tag>
+                                    ),
+                                  },
+                                  {
+                                    title: 'Points',
+                                    dataIndex: 'points',
+                                    key: 'points',
+                                  },
+                                ]}
+                                pagination={false}
+                                size="small"
+                              />
+                            </Card>
+                          </Col>
+                        )
+                      )}
+                    </Row>
+                  ) : (
+                    <Empty description="Add subjects with grades to see your analysis" />
+                  )}
+                </Card>
+              </Col>
+
+              {/* Performance Insights */}
+              <Col xs={24}>
+                <Card title="Performance Insights">
+                  {subjects.filter((s) => s.grade).length >= 7 ? (
+                    <Row gutter={[16, 16]}>
+                      <Col xs={24} md={8}>
+                        <Card size="small" className="text-center">
+                          <Title level={4}>
+                            {meanGrade.points >= 10 ? (
+                              <CheckCircleOutlined
+                                style={{ color: '#52c41a' }}
+                              />
+                            ) : (
+                              <CloseCircleOutlined
+                                style={{ color: '#f5222d' }}
+                              />
+                            )}
+                          </Title>
+                          <Text>University Qualification</Text>
+                          <div className="mt-2">
+                            {meanGrade.points >= 10 ? (
+                              <Tag color="success">Qualified</Tag>
+                            ) : (
+                              <Tag color="error">Not Qualified</Tag>
+                            )}
+                          </div>
+                        </Card>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Card size="small" className="text-center">
+                          <Title level={4}>
+                            <Award
+                              size={24}
+                              color={
+                                meanGrade.points >= 8 ? '#1890ff' : '#d9d9d9'
+                              }
+                            />
+                          </Title>
+                          <Text>College Qualification</Text>
+                          <div className="mt-2">
+                            {meanGrade.points >= 8 ? (
+                              <Tag color="processing">Qualified</Tag>
+                            ) : (
+                              <Tag color="warning">Not Qualified</Tag>
+                            )}
+                          </div>
+                        </Card>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Card size="small" className="text-center">
+                          <Title level={4}>
+                            <LineChartOutlined style={{ color: '#722ed1' }} />
+                          </Title>
+                          <Text>Performance Level</Text>
+                          <div className="mt-2">
+                            {meanGrade.points >= 10 ? (
+                              <Tag color="success">Excellent</Tag>
+                            ) : meanGrade.points >= 8 ? (
+                              <Tag color="processing">Good</Tag>
+                            ) : meanGrade.points >= 6 ? (
+                              <Tag color="warning">Average</Tag>
+                            ) : (
+                              <Tag color="error">Below Average</Tag>
+                            )}
+                          </div>
+                        </Card>
+                      </Col>
+                    </Row>
+                  ) : (
+                    <Alert
+                      message="Insufficient Data"
+                      description="Enter at least 7 subjects with grades to see performance insights"
+                      type="warning"
+                      showIcon
+                    />
+                  )}
+                </Card>
+              </Col>
+            </Row>
+          ) : (
+            <Card>
+              <Empty
+                description={
+                  <span>
+                    No academic data available. Please input your KCSE results
+                    first.
+                  </span>
+                }
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+              <div className="text-center mt-4">
+                <Button type="primary" onClick={() => setActiveTab('input')}>
+                  Input Results Now
+                </Button>
               </div>
             </Card>
-          </Col>
+          )}
+        </TabPane>
 
-          {/* Submit Button */}
-          <Col xs={24} className="flex justify-end">
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              loading={mutation.isPending}
-            >
-              <ClipboardList size={16} style={{ marginRight: 8 }} />
-              Get Career Recommendations
-            </Button>
-          </Col>
-        </Row>
-      </Form>
+        <TabPane
+          tab={
+            <span>
+              <HistoryOutlined /> Recommendation History
+            </span>
+          }
+          key="history"
+        >
+          <Card>
+            {getRecommendationHistory().length > 0 ? (
+              <Table
+                dataSource={getRecommendationHistory()}
+                rowKey="_id"
+                columns={[
+                  {
+                    title: 'Date',
+                    dataIndex: 'createdAt',
+                    key: 'createdAt',
+                    render: (date) => new Date(date).toLocaleDateString(),
+                  },
+                  {
+                    title: 'Mean Grade',
+                    dataIndex: ['kcseResults', 'meanGrade'],
+                    key: 'meanGrade',
+                    render: (grade) => (
+                      <Tag color={getGradeColor(grade)}>{grade}</Tag>
+                    ),
+                  },
+                  {
+                    title: 'Mean Points',
+                    dataIndex: ['kcseResults', 'meanPoints'],
+                    key: 'meanPoints',
+                  },
+                  {
+                    title: 'Strengths',
+                    dataIndex: 'strengths',
+                    key: 'strengths',
+                    render: (strengths) => (
+                      <Space>
+                        {strengths.map((strength, index) => (
+                          <Tag key={index} color="blue">
+                            {strength}
+                          </Tag>
+                        ))}
+                      </Space>
+                    ),
+                  },
+                  {
+                    title: 'Actions',
+                    key: 'actions',
+                    render: (_, record) => (
+                      <Space>
+                        <Button
+                          type="primary"
+                          size="small"
+                          onClick={() => loadRecommendation(record)}
+                        >
+                          Load & Edit
+                        </Button>
+                        <Button
+                          type="default"
+                          size="small"
+                          onClick={() =>
+                            navigate(`/recommendations/${record._id}`)
+                          }
+                        >
+                          View Results
+                        </Button>
+                      </Space>
+                    ),
+                  },
+                ]}
+              />
+            ) : (
+              <Empty description="No recommendation history found" />
+            )}
+          </Card>
+        </TabPane>
+      </Tabs>
 
       {/* Add Subject Modal */}
       <Modal

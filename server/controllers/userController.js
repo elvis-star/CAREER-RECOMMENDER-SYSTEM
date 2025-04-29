@@ -162,7 +162,7 @@ export const updateProfile = async (req, res, next) => {
       school: req.body.school,
       graduationYear: req.body.graduationYear,
       bio: req.body.bio,
-      profileImage: req.body.profileImage, // This will now be a Cloudinary URL
+      avatar: req.body.avatar, // This will now be a Cloudinary URL
     };
 
     // Remove undefined fields

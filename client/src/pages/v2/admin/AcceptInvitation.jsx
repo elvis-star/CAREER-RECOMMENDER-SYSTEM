@@ -38,7 +38,7 @@ const AcceptInvitation = () => {
     const verifyToken = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/admin/invite/verify/${token}`);
+        const response = await api.get(`/admin/verify-invitation/${token}`);
         setInvitation(response.data.data);
         setCurrentStep(1);
       } catch (error) {
@@ -56,7 +56,7 @@ const AcceptInvitation = () => {
   const handleSubmit = async (values) => {
     try {
       setSubmitting(true);
-      await api.post(`/admin/invite/accept/${token}`, {
+      await api.post(`/admin/accept-invitation/${token}`, {
         name: values.name,
         password: values.password,
       });

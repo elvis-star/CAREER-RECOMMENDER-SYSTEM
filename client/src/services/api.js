@@ -147,6 +147,53 @@ export const unsaveCareer = async (careerId) => {
   return response.data;
 };
 
+// NEW CAREER API FUNCTIONS
+export const rateCareer = async (careerId, rating) => {
+  const response = await api.post(`/careers/${careerId}/rate`, { rating });
+  return response.data;
+};
+
+export const viewCareer = async (careerId) => {
+  const response = await api.post(`/careers/${careerId}/view`);
+  return response.data;
+};
+
+export const fetchCareerStats = async () => {
+  const response = await api.get('/careers/stats');
+  return response.data;
+};
+
+export const updateUserPreferences = async (preferences) => {
+  const response = await api.put('/users/preferences', preferences);
+  return response.data;
+};
+
+export const pinCareer = async (careerId) => {
+  const response = await api.post(`/users/pinned-careers/${careerId}`);
+  return response.data;
+};
+
+export const unpinCareer = async (careerId) => {
+  const response = await api.delete(`/users/pinned-careers/${careerId}`);
+  return response.data;
+};
+
+export const compareCareer = async (careerIds) => {
+  const response = await api.post('/careers/compare', { careerIds });
+  return response.data;
+};
+
+export const exportCareers = async (format, filters) => {
+  const response = await api.post(
+    '/careers/export',
+    { format, filters },
+    {
+      responseType: format === 'pdf' ? 'blob' : 'json',
+    }
+  );
+  return response.data;
+};
+
 // Institution API calls
 export const fetchInstitutions = async (params = {}) => {
   const response = await api.get('/institutions', { params });

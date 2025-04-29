@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import {
   Typography,
   Card,
@@ -26,7 +28,7 @@ import {
 } from '@ant-design/icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getRecommendations } from '../../services/recommendationService';
+import { fetchRecommendationsForUser } from '../../services/recommendationService';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
@@ -38,11 +40,11 @@ const CareerRecommendations = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   // State for recommendations
-  const [recommendations, setRecommendations] = useState(
-    location.state?.recommendations || null
-  );
+  const [recommendations, setRecommendations] = useState(null);
+  const [recommendationsArray, setRecommendationsArray] = useState([]);
   const [filteredRecommendations, setFilteredRecommendations] = useState([]);
   const [savedCareers, setSavedCareers] = useState([]);
+  const [studentInfo, setStudentInfo] = useState(null);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,254 +54,169 @@ const CareerRecommendations = () => {
   // Fixed React Query v5 syntax
   const { data, isLoading, error } = useQuery({
     queryKey: ['recommendations'],
-    queryFn: () => getRecommendations(),
-    enabled: !recommendations,
+    queryFn: () => fetchRecommendationsForUser(),
+    enabled: true, // Always fetch data when component mounts
     onSuccess: (data) => {
-      setRecommendations(data);
+      console.log('Fetched recommendations:', data);
+      // Only set recommendations from API if we don't have data from location state
+      if (!recommendations) {
+        setRecommendations(data);
+      }
     },
-    // Mock data for demonstration
-    initialData: location.state?.recommendations || {
-      studentInfo: {
-        meanGrade: 'B+',
-        meanPoints: 10.2,
-        strengths: ['Sciences', 'Mathematics', 'Languages'],
-      },
-      recommendations: [
-        {
-          id: 1,
-          title: 'Computer Science',
-          match: 95,
-          category: 'Technology',
-          description:
-            'Computer Science involves the study of computers and computational systems, including theory, design, development, and application.',
-          keySubjects: ['Mathematics', 'Physics', 'Computer Studies'],
-          institutions: [
-            'University of Nairobi',
-            'Strathmore University',
-            'Jomo Kenyatta University',
-          ],
-          jobProspects: [
-            'Software Developer',
-            'Systems Analyst',
-            'Data Scientist',
-          ],
-          marketDemand: 'High',
-          salary: {
-            entry: 'KES 60,000 - 80,000',
-            mid: 'KES 120,000 - 180,000',
-            senior: 'KES 250,000+',
-          },
-        },
-        {
-          id: 2,
-          title: 'Electrical Engineering',
-          match: 87,
-          category: 'Engineering',
-          description:
-            'Electrical Engineering focuses on the study and application of electricity, electronics, and electromagnetism.',
-          keySubjects: ['Mathematics', 'Physics', 'Chemistry'],
-          institutions: [
-            'University of Nairobi',
-            'Moi University',
-            'Technical University of Kenya',
-          ],
-          jobProspects: [
-            'Electrical Engineer',
-            'Power Systems Engineer',
-            'Control Systems Engineer',
-          ],
-          marketDemand: 'High',
-          salary: {
-            entry: 'KES 55,000 - 75,000',
-            mid: 'KES 100,000 - 150,000',
-            senior: 'KES 200,000+',
-          },
-        },
-        {
-          id: 3,
-          title: 'Medicine',
-          match: 82,
-          category: 'Healthcare',
-          description:
-            'Medicine involves the study, diagnosis, treatment, and prevention of disease and injury in humans.',
-          keySubjects: ['Biology', 'Chemistry', 'Mathematics'],
-          institutions: [
-            'University of Nairobi',
-            'Kenyatta University',
-            'Moi University',
-          ],
-          jobProspects: ['Medical Doctor', 'Surgeon', 'Medical Researcher'],
-          marketDemand: 'Very High',
-          salary: {
-            entry: 'KES 80,000 - 100,000',
-            mid: 'KES 150,000 - 250,000',
-            senior: 'KES 300,000+',
-          },
-        },
-        {
-          id: 4,
-          title: 'Business Administration',
-          match: 78,
-          category: 'Business',
-          description:
-            'Business Administration involves managing business operations and making organizational decisions.',
-          keySubjects: ['Mathematics', 'English', 'Business Studies'],
-          institutions: [
-            'Strathmore University',
-            'KCA University',
-            'University of Nairobi',
-          ],
-          jobProspects: [
-            'Business Manager',
-            'Management Consultant',
-            'Entrepreneur',
-          ],
-          marketDemand: 'Medium',
-          salary: {
-            entry: 'KES 45,000 - 65,000',
-            mid: 'KES 90,000 - 130,000',
-            senior: 'KES 180,000+',
-          },
-        },
-        {
-          id: 5,
-          title: 'Actuarial Science',
-          match: 75,
-          category: 'Finance',
-          description:
-            'Actuarial Science applies mathematical and statistical methods to assess risk in insurance, finance, and other industries.',
-          keySubjects: ['Mathematics', 'Economics', 'Statistics'],
-          institutions: [
-            'University of Nairobi',
-            'JKUAT',
-            'Strathmore University',
-          ],
-          jobProspects: ['Actuary', 'Risk Analyst', 'Insurance Underwriter'],
-          marketDemand: 'High',
-          salary: {
-            entry: 'KES 70,000 - 90,000',
-            mid: 'KES 130,000 - 180,000',
-            senior: 'KES 250,000+',
-          },
-        },
-        {
-          id: 6,
-          title: 'Architecture',
-          match: 72,
-          category: 'Design',
-          description:
-            'Architecture involves the planning, designing, and construction of buildings and other physical structures.',
-          keySubjects: ['Mathematics', 'Physics', 'Art & Design'],
-          institutions: [
-            'University of Nairobi',
-            'JKUAT',
-            'Technical University of Kenya',
-          ],
-          jobProspects: ['Architect', 'Urban Planner', 'Interior Designer'],
-          marketDemand: 'Medium',
-          salary: {
-            entry: 'KES 50,000 - 70,000',
-            mid: 'KES 100,000 - 150,000',
-            senior: 'KES 200,000+',
-          },
-        },
-        {
-          id: 7,
-          title: 'Law',
-          match: 68,
-          category: 'Legal',
-          description:
-            'Law involves the study of legal systems, regulations, and the practice of interpreting and enforcing laws.',
-          keySubjects: ['English', 'History', 'Kiswahili'],
-          institutions: [
-            'University of Nairobi',
-            'Strathmore University',
-            'Moi University',
-          ],
-          jobProspects: ['Lawyer', 'Legal Consultant', 'Judge'],
-          marketDemand: 'Medium',
-          salary: {
-            entry: 'KES 60,000 - 80,000',
-            mid: 'KES 120,000 - 200,000',
-            senior: 'KES 300,000+',
-          },
-        },
-        {
-          id: 8,
-          title: 'Pharmacy',
-          match: 65,
-          category: 'Healthcare',
-          description:
-            'Pharmacy involves the science and practice of discovering, producing, and dispensing medications.',
-          keySubjects: ['Chemistry', 'Biology', 'Mathematics'],
-          institutions: [
-            'University of Nairobi',
-            'Kenyatta University',
-            'JKUAT',
-          ],
-          jobProspects: [
-            'Pharmacist',
-            'Pharmaceutical Researcher',
-            'Clinical Pharmacist',
-          ],
-          marketDemand: 'High',
-          salary: {
-            entry: 'KES 65,000 - 85,000',
-            mid: 'KES 110,000 - 160,000',
-            senior: 'KES 200,000+',
-          },
-        },
-      ],
+    onError: (err) => {
+      console.error('Error fetching recommendations:', err);
     },
   });
 
+  // Process recommendations data to handle different formats
+  const processRecommendationsData = (data) => {
+    if (!data) return { recommendationsArray: [], studentInfo: null };
+
+    try {
+      // Check if data has a recommendations array property (API format)
+      if (data.recommendations && Array.isArray(data.recommendations)) {
+        return {
+          recommendationsArray: data.recommendations,
+          studentInfo: data.studentInfo || null,
+        };
+      }
+
+      // Check if data itself is the recommendations array (location state format)
+      if (Array.isArray(data)) {
+        return {
+          recommendationsArray: data,
+          studentInfo: null,
+        };
+      }
+
+      // Handle case where location state has a different structure
+      if (data.recommendations && Array.isArray(data.recommendations)) {
+        return {
+          recommendationsArray: data.recommendations,
+          studentInfo: data.studentInfo || null,
+        };
+      }
+
+      console.warn('Unknown recommendations data format:', data);
+      return { recommendationsArray: [], studentInfo: null };
+    } catch (err) {
+      console.error('Error processing recommendations data:', err);
+      return { recommendationsArray: [], studentInfo: null };
+    }
+  };
+
+  // Initialize recommendations from location state or API data
+  useEffect(() => {
+    try {
+      if (location.state) {
+        console.log('Location state:', location.state);
+
+        // Handle different possible structures in location state
+        if (location.state.recommendations) {
+          console.log(
+            'Using location state recommendations:',
+            location.state.recommendations
+          );
+          setRecommendations(location.state.recommendations);
+
+          // Process the data to extract the array and student info
+          const { recommendationsArray: recArray, studentInfo: studInfo } =
+            processRecommendationsData(location.state.recommendations);
+          setRecommendationsArray(recArray);
+          setStudentInfo(studInfo);
+        } else if (location.state.career) {
+          // Handle single career view if that's in the location state
+          console.log(
+            'Single career in location state:',
+            location.state.career
+          );
+        } else {
+          // Assume the entire location state is the recommendations object
+          console.log('Using entire location state as recommendations');
+          setRecommendations(location.state);
+
+          // Process the data to extract the array and student info
+          const { recommendationsArray: recArray, studentInfo: studInfo } =
+            processRecommendationsData(location.state);
+          setRecommendationsArray(recArray);
+          setStudentInfo(studInfo);
+        }
+      } else if (data && !recommendations) {
+        // If we have data from API and no recommendations set yet, use API data
+        console.log('Using API data recommendations:', data);
+        setRecommendations(data);
+
+        // Process the data to extract the array and student info
+        const { recommendationsArray: recArray, studentInfo: studInfo } =
+          processRecommendationsData(data);
+        setRecommendationsArray(recArray);
+        setStudentInfo(studInfo);
+      }
+    } catch (err) {
+      console.error('Error in recommendations initialization:', err);
+    }
+  }, [location.state, data, recommendations]);
+
   // Apply filters and sorting
   useEffect(() => {
-    if (!recommendations) return;
+    try {
+      if (recommendationsArray.length === 0) {
+        console.log('No recommendations to filter');
+        setFilteredRecommendations([]);
+        return;
+      }
 
-    let filtered = [...recommendations.recommendations];
+      let filtered = [...recommendationsArray];
 
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (career) =>
-          career.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          career.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          career.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      // Apply search filter
+      if (searchQuery) {
+        filtered = filtered.filter(
+          (career) =>
+            career.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            career.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            career.description.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+
+      // Apply category filter
+      if (categoryFilter) {
+        filtered = filtered.filter(
+          (career) => career.category === categoryFilter
+        );
+      }
+
+      // Apply sorting
+      if (sortBy === 'match') {
+        filtered.sort((a, b) => b.match - a.match);
+      } else if (sortBy === 'title') {
+        filtered.sort((a, b) => a.title.localeCompare(b.title));
+      } else if (sortBy === 'demand') {
+        const demandOrder = { 'Very High': 4, High: 3, Medium: 2, Low: 1 };
+        filtered.sort(
+          (a, b) => demandOrder[b.marketDemand] - demandOrder[a.marketDemand]
+        );
+      }
+
+      setFilteredRecommendations(filtered);
+    } catch (err) {
+      console.error('Error filtering recommendations:', err);
+      setFilteredRecommendations([]);
     }
-
-    // Apply category filter
-    if (categoryFilter) {
-      filtered = filtered.filter(
-        (career) => career.category === categoryFilter
-      );
-    }
-
-    // Apply sorting
-    if (sortBy === 'match') {
-      filtered.sort((a, b) => b.match - a.match);
-    } else if (sortBy === 'title') {
-      filtered.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sortBy === 'demand') {
-      const demandOrder = { 'Very High': 4, High: 3, Medium: 2, Low: 1 };
-      filtered.sort(
-        (a, b) => demandOrder[b.marketDemand] - demandOrder[a.marketDemand]
-      );
-    }
-
-    setFilteredRecommendations(filtered);
-  }, [recommendations, searchQuery, categoryFilter, sortBy]);
+  }, [recommendationsArray, searchQuery, categoryFilter, sortBy]);
 
   // Get unique categories for filter
   const getCategories = () => {
-    if (!recommendations) return [];
-    const categories = [
-      ...new Set(
-        recommendations.recommendations.map((career) => career.category)
-      ),
-    ];
-    return categories.sort();
+    try {
+      if (recommendationsArray.length === 0) return [];
+
+      const categories = [
+        ...new Set(recommendationsArray.map((career) => career.category)),
+      ];
+      return categories.sort();
+    } catch (err) {
+      console.error('Error getting categories:', err);
+      return [];
+    }
   };
 
   // Handle saving a career
@@ -340,7 +257,8 @@ const CareerRecommendations = () => {
     return 'red';
   };
 
-  if (isLoading) {
+  // Show loading state while we're fetching data and don't have any recommendations yet
+  if (isLoading && !recommendations && recommendationsArray.length === 0) {
     return (
       <div className="max-w-6xl mx-auto py-8 px-4 text-center">
         <Spin size="large" />
@@ -349,7 +267,8 @@ const CareerRecommendations = () => {
     );
   }
 
-  if (error) {
+  // Show error state if there was an error fetching and we don't have any recommendations
+  if (error && !recommendations && recommendationsArray.length === 0) {
     return (
       <div className="max-w-6xl mx-auto py-8 px-4">
         <Card className="text-center py-10">
@@ -368,7 +287,8 @@ const CareerRecommendations = () => {
     );
   }
 
-  if (!recommendations) {
+  // Show empty state if we have no recommendations from either source
+  if (recommendationsArray.length === 0) {
     return (
       <div className="max-w-6xl mx-auto py-8 px-4">
         <Card className="text-center py-10">
@@ -409,9 +329,9 @@ const CareerRecommendations = () => {
               </Text>
               <Space align="baseline">
                 <Title level={3} className="mb-0">
-                  {recommendations.studentInfo.meanGrade}
+                  {studentInfo?.meanGrade || 'N/A'}
                 </Title>
-                <Text>({recommendations.studentInfo.meanPoints} points)</Text>
+                <Text>({studentInfo?.meanPoints || 0} points)</Text>
               </Space>
             </div>
           </Card>
@@ -424,12 +344,14 @@ const CareerRecommendations = () => {
                 Academic Strengths
               </Text>
               <Space wrap>
-                {recommendations.studentInfo.strengths.map(
-                  (strength, index) => (
+                {Array.isArray(studentInfo?.strengths) ? (
+                  studentInfo.strengths.map((strength, index) => (
                     <Tag color="green" key={index}>
                       {strength}
                     </Tag>
-                  )
+                  ))
+                ) : (
+                  <Text type="secondary">No strengths data available</Text>
                 )}
               </Space>
             </div>
@@ -444,7 +366,7 @@ const CareerRecommendations = () => {
               </Text>
               <Space align="baseline">
                 <Title level={3} className="mb-0">
-                  {recommendations.recommendations.length}
+                  {recommendationsArray.length}
                 </Title>
                 <Text>career paths</Text>
               </Space>
@@ -613,11 +535,15 @@ const CareerRecommendations = () => {
                     Key Subjects
                   </Text>
                   <div>
-                    {career.keySubjects.map((subject, index) => (
-                      <Tag key={index} className="mb-1">
-                        {subject}
-                      </Tag>
-                    ))}
+                    {Array.isArray(career.keySubjects) ? (
+                      career.keySubjects.map((subject, index) => (
+                        <Tag key={index} className="mb-1">
+                          {subject}
+                        </Tag>
+                      ))
+                    ) : (
+                      <Text type="secondary">No key subjects available</Text>
+                    )}
                   </div>
                 </div>
 
@@ -646,7 +572,7 @@ const CareerRecommendations = () => {
                     <Text type="secondary" className="block">
                       Entry Salary
                     </Text>
-                    <Text>{career.salary.entry}</Text>
+                    <Text>{career.salary?.entry || 'N/A'}</Text>
                   </Col>
                 </Row>
               </Card>

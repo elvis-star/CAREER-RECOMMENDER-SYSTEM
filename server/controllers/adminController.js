@@ -214,6 +214,7 @@ export const getCareerPopularity = async (req, res, next) => {
 export const createAdminInvitation = async (req, res, next) => {
   try {
     const { email, name } = req.body;
+    console.log('req.user: ', req.user);
 
     if (!email || !name) {
       return next(
@@ -247,10 +248,16 @@ export const createAdminInvitation = async (req, res, next) => {
     const invitationURL = `${process.env.CLIENT_URL}/admin/accept-invitation/${invitationToken}`;
 
     // Send invitation email
-    try {
-      await sendAdminInvitation(email, name, invitationURL, req.user.name);
+    const sendResult = await sendAdminInvitation(
+      email,
+      name,
+      invitationURL,
+      req.user.name
+    );
+    console.log('sendResult: ', sendResult);
 
-      // Log activity
+    // Check if either primary or backup sent the email successfully
+    if (sendResult.response.status == 200) {
       await Activity.create({
         user: req.user._id,
         action: 'admin_invitation_sent',
@@ -259,22 +266,20 @@ export const createAdminInvitation = async (req, res, next) => {
         userAgent: req.headers['user-agent'],
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: 'Admin invitation sent successfully',
       });
-    } catch (err) {
-      console.error('Email could not be sent', err);
-      invitation.remove();
+    } else {
+      await invitation.deleteOne();
+      console.error('Invitation email could not be sent:', email);
       return next(
-        createError(
-          'Invitation email could not be sent. Please try again later.',
-          500
-        )
+        createError('Email sending failed via both transports.', 500)
       );
     }
   } catch (error) {
-    next(error);
+    console.error('Error in createAdminInvitation:', error);
+    return next(error);
   }
 };
 
@@ -283,18 +288,16 @@ export const createAdminInvitation = async (req, res, next) => {
 // @access  Public
 export const acceptAdminInvitation = async (req, res, next) => {
   try {
-    const { password } = req.body;
-    if (!password) {
-      return next(createError('Please provide a password', 400));
+    const { name, password } = req.body;
+    if (!name || !password) {
+      return next(createError('Please provide your name and password', 400));
     }
 
-    // Get hashed token
     const hashedToken = crypto
       .createHash('sha256')
       .update(req.params.token)
       .digest('hex');
 
-    // Find invitation
     const invitation = await AdminInvitation.findOne({
       token: hashedToken,
       expiresAt: { $gt: Date.now() },
@@ -304,9 +307,8 @@ export const acceptAdminInvitation = async (req, res, next) => {
       return next(createError('Invalid or expired invitation token', 400));
     }
 
-    // Create admin user
     const user = await User.create({
-      name: invitation.name,
+      name,
       email: invitation.email,
       password,
       role: 'admin',
@@ -314,7 +316,6 @@ export const acceptAdminInvitation = async (req, res, next) => {
       emailVerified: true,
     });
 
-    // Log activity
     await Activity.create({
       user: user._id,
       action: 'admin_invitation_accepted',
@@ -322,10 +323,8 @@ export const acceptAdminInvitation = async (req, res, next) => {
       userAgent: req.headers['user-agent'],
     });
 
-    // Remove invitation
     await invitation.remove();
 
-    // Send welcome email
     try {
       await sendAccountNotification(
         user.email,
@@ -333,12 +332,42 @@ export const acceptAdminInvitation = async (req, res, next) => {
       );
     } catch (err) {
       console.error('Welcome email could not be sent', err);
-      // Continue even if email fails
     }
 
     res.status(201).json({
       success: true,
       message: 'Admin account created successfully. You can now log in.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    verify admin invitation
+// @route   GET /api/admin/verify-invitation/:token
+// @access  Public
+export const verifyAdminInvitation = async (req, res, next) => {
+  try {
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
+
+    const invitation = await AdminInvitation.findOne({
+      token: hashedToken,
+      expiresAt: { $gt: Date.now() },
+    }).populate('invitedBy', 'name email'); // To show who invited
+
+    if (!invitation) {
+      return next(createError('Invalid or expired invitation token', 400));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        email: invitation.email,
+        invitedBy: invitation.invitedBy,
+      },
     });
   } catch (error) {
     next(error);

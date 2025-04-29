@@ -21,9 +21,12 @@ const ActivitySchema = new mongoose.Schema(
         'view_institution',
         'update_preferences',
         'generate_recommendations',
+        'update_recommendations',
         'password_reset',
         'email_verification',
         'admin_action',
+        'admin_invitation_sent',
+        'admin_invitation_accepted',
       ],
     },
     details: {
