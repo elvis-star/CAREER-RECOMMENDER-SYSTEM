@@ -11,7 +11,8 @@
     "seed:import": "node utils/seeder.js -i",
     "seed:delete": "node utils/seeder.js -d",
     "seed-careers": "node scripts/seed-careers.js",
-    "seed-careers:force": "node scripts/seed-careers.js --force"
+    "seed-careers:force": "node scripts/seed-careers.js --force",
+    "seed-all": "node scripts/seed-all.js --force"
   },
   "keywords": [
     "career",

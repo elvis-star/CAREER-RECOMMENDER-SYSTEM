@@ -12,9 +12,13 @@ import {
   getInstitutionsByProgram,
   updateFeaturedStatus,
   getInstitutionStats,
+  bulkDeleteInstitutions,
+  bulkUpdateFeatured,
+  importInstitutions,
+  duplicateInstitution,
 } from '../controllers/institutionController.js';
-import { protect, authorize } from '../controllers/authController.js';
 import { uploadMiddleware } from '../utils/fileUpload.js';
+import { authorize, protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -34,26 +38,28 @@ const institutionUpload = uploadMiddleware.fields([
   { name: 'images', maxCount: 5 },
 ]);
 
-router.route('/').post(institutionUpload, createInstitution);
+// FIXED: Stats route (must be before /:id routes to avoid conflicts)
+router.get('/stats', getInstitutionStats);
 
-router
-  .route('/:id')
-  .put(institutionUpload, updateInstitution)
-  .delete(deleteInstitution);
+// Bulk operations
+router.post('/bulk-delete', bulkDeleteInstitutions);
+router.post('/bulk-update-featured', bulkUpdateFeatured);
+router.post('/import', importInstitutions);
 
+// Institution CRUD
+router.post('/', institutionUpload, createInstitution);
+router.put('/:id', institutionUpload, updateInstitution);
+router.delete('/:id', deleteInstitution);
+
+// Program management
 router.post('/:id/programs', addProgram);
 router.put('/:id/programs/:programId', updateProgram);
 router.delete('/:id/programs/:programId', deleteProgram);
 
-// Featured status update route
-router.patch(
-  '/:id/featured',
-  protect,
-  authorize('admin'),
-  updateFeaturedStatus
-);
+// FIXED: Featured status update route (specific endpoint)
+router.patch('/:id/featured', updateFeaturedStatus);
 
-// Stats route
-router.get('/stats', protect, authorize('admin'), getInstitutionStats);
+// Duplicate institution
+router.post('/:id/duplicate', duplicateInstitution);
 
 export default router;

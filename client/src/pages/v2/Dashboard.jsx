@@ -389,7 +389,7 @@ const Dashboard = () => {
               </Row>
               <div className="mt-3 text-right">
                 <Button type="link">
-                  <Link to="/academic-profile">View Full Academic Profile</Link>
+                  <Link to="/input-results">View Full Academic Profile</Link>
                 </Button>
               </div>
             </Col>

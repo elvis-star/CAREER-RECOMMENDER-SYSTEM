@@ -13,6 +13,7 @@ const ActivitySchema = new mongoose.Schema(
       enum: [
         'login',
         'register',
+        'api_request',
         'update_profile',
         'input_results',
         'view_career',

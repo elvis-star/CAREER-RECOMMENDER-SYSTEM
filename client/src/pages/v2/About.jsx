@@ -16,25 +16,25 @@ const About = () => {
     {
       name: 'Dr. Sarah Johnson',
       role: 'Founder & CEO',
-      image: '/placeholder.svg?height=150&width=150',
+      image: '/Sarah.png?height=150&width=150',
       bio: 'Ph.D. in Educational Psychology with over 15 years of experience in career counseling and development.',
     },
     {
       name: 'Michael Omondi',
       role: 'Lead Career Counselor',
-      image: '/placeholder.svg?height=150&width=150',
+      image: '/michael.png?height=150&width=150',
       bio: 'Former university career advisor with expertise in helping students transition from education to employment.',
     },
     {
       name: 'Amina Wanjiku',
       role: 'Data Scientist',
-      image: '/placeholder.svg?height=150&width=150',
+      image: '/amina.png?height=150&width=150',
       bio: 'Specializes in analyzing educational and labor market data to identify emerging career trends in Kenya.',
     },
     {
       name: 'David Mwangi',
       role: 'Software Engineer',
-      image: '/placeholder.svg?height=150&width=150',
+      image: '/david.png?height=150&width=150',
       bio: 'Full-stack developer passionate about creating tools that make education and career guidance accessible to all.',
     },
   ];
@@ -78,7 +78,7 @@ const About = () => {
         </Col>
         <Col xs={24} md={12}>
           <img
-            src="/placeholder.svg?height=400&width=500"
+            src="/studentsDiscussingCareer.jfif?height=400&width=500"
             alt="Students discussing career options"
             className="w-full rounded-lg shadow-lg"
           />
@@ -168,7 +168,7 @@ const About = () => {
         <Row gutter={[32, 32]} align="middle">
           <Col xs={24} md={12}>
             <img
-              src="/placeholder.svg?height=400&width=500"
+              src="/ourstory.png?height=400&width=500"
               alt="Our journey"
               className="w-full rounded-lg shadow-lg"
             />

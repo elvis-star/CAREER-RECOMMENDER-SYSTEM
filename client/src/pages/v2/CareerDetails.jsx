@@ -46,7 +46,7 @@ import {
   DollarSign,
   User,
 } from 'lucide-react';
-import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom'; // Removed useLocation
 import { useQuery } from '@tanstack/react-query';
 import { getCareerDetails } from '../../services/recommendationService';
 
@@ -55,15 +55,13 @@ const { Panel } = Collapse;
 
 const CareerDetails = () => {
   const { id } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
 
   // State for saved status
   const [isSaved, setIsSaved] = useState(false);
 
-  // Get career details from location state or fetch from API
-  // Fixed React Query v5 format - using object parameter
+  // Fetch career details from API. The backend will now include match/reasons if applicable.
   const {
     data: career,
     isLoading,
@@ -71,8 +69,6 @@ const CareerDetails = () => {
   } = useQuery({
     queryKey: ['careerDetails', id],
     queryFn: () => getCareerDetails(id),
-    enabled: !location.state?.career,
-    initialData: location.state?.career,
   });
 
   // Handle save career
@@ -196,7 +192,7 @@ const CareerDetails = () => {
                   <div>
                     <Text type="secondary">Entry Level</Text>
                     <div>
-                      <Text strong>{career.salary.entry}</Text>
+                      <Text strong>{career.salary?.entry}</Text>
                     </div>
                   </div>
                 </Space>
@@ -212,7 +208,7 @@ const CareerDetails = () => {
                   <div>
                     <Text type="secondary">Mid-Career</Text>
                     <div>
-                      <Text strong>{career.salary.mid}</Text>
+                      <Text strong>{career.salary?.mid}</Text>
                     </div>
                   </div>
                 </Space>
@@ -228,7 +224,7 @@ const CareerDetails = () => {
                   <div>
                     <Text type="secondary">Senior Level</Text>
                     <div>
-                      <Text strong>{career.salary.senior}</Text>
+                      <Text strong>{career.salary?.senior}</Text>
                     </div>
                   </div>
                 </Space>
@@ -271,9 +267,9 @@ const CareerDetails = () => {
             <Divider />
             <Paragraph>
               The job market for {career.title} in Kenya is currently
-              experiencing {career.marketDemand.toLowerCase()} demand. Graduates
-              in this field can expect good employment opportunities in both the
-              public and private sectors.
+              experiencing {career.marketDemand?.toLowerCase()} demand.
+              Graduates in this field can expect good employment opportunities
+              in both the public and private sectors.
             </Paragraph>
           </Card>
         </>
@@ -290,32 +286,49 @@ const CareerDetails = () => {
         <>
           <Title level={4}>Recommended Institutions</Title>
           <Row gutter={[16, 16]} className="mb-6">
-            {career.institutions.map((institution, index) => (
-              <Col xs={24} md={12} key={index}>
+            {career.institutions?.map((institution) => (
+              <Col xs={24} md={12} key={institution.id}>
                 <Card hoverable>
                   <Space>
                     <Avatar
-                      icon={<School size={24} />}
+                      src={
+                        institution.logo && institution.logo !== ''
+                          ? institution.logo
+                          : undefined
+                      } // Use institution logo if available and not empty
+                      icon={
+                        !institution.logo || institution.logo === '' ? (
+                          <School size={24} />
+                        ) : undefined
+                      }
                       style={{ backgroundColor: '#e6f7ff', color: '#1890ff' }}
                       size={48}
                     />
                     <div>
-                      <Text strong>{institution}</Text>
+                      <Text strong>{institution.name}</Text>
                       <div>
                         <Space>
                           <EnvironmentOutlined className="text-gray-500" />
-                          <Text type="secondary">Kenya</Text>
+                          <Text type="secondary">
+                            {institution.location?.city},{' '}
+                            {institution.location?.country}
+                          </Text>
                         </Space>
                       </div>
                     </div>
                   </Space>
-                  <Button
-                    type="link"
-                    icon={<LinkOutlined />}
-                    className="mt-4 w-full"
-                  >
-                    Visit Website
-                  </Button>
+                  {institution.website && (
+                    <Button
+                      type="link"
+                      icon={<LinkOutlined />}
+                      className="mt-4 w-full"
+                      href={institution.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Visit Website
+                    </Button>
+                  )}
                 </Card>
               </Col>
             ))}
@@ -326,10 +339,11 @@ const CareerDetails = () => {
             <Panel header="Minimum Entry Requirements" key="1">
               <List
                 dataSource={[
-                  'Mean grade of B+ and above in KCSE',
-                  'B+ in Mathematics',
-                  'B+ in English or Kiswahili',
-                  'B+ in at least two relevant subjects',
+                  `Minimum mean grade of ${career.minimumMeanGrade} in KCSE`,
+                  `Strong performance in key subjects like ${career.keySubjects?.join(
+                    ', '
+                  )}`,
+                  'KCSE Certificate',
                 ]}
                 renderItem={(item) => (
                   <List.Item>
@@ -344,9 +358,8 @@ const CareerDetails = () => {
             <Panel header="Program Duration" key="2">
               <List
                 dataSource={[
-                  "Bachelor's Degree: 4 years",
-                  "Master's Degree: 2 years",
-                  'Doctoral Degree: 3-5 years',
+                  `Bachelor's Degree: ${career.programDuration}`,
+                  // Add more specific program durations if available in career data
                 ]}
                 renderItem={(item) => (
                   <List.Item>
@@ -424,159 +437,128 @@ const CareerDetails = () => {
         <>
           <Title level={4}>Career Progression</Title>
           <Row gutter={[16, 16]} className="mb-6">
-            <Col xs={24}>
-              <Card
-                title="Entry Level"
-                extra={
-                  <Badge
-                    count="0-2 years"
-                    style={{ backgroundColor: '#52c41a' }}
-                  />
-                }
-              >
-                <div className="mb-3">
-                  <Text strong>Typical Roles:</Text>
-                  <div>
-                    {[
-                      'Junior Developer',
-                      'Graduate Trainee',
-                      'Research Assistant',
-                    ].map((role, index) => (
-                      <Tag key={index} className="mr-2 mb-2">
-                        {role}
-                      </Tag>
-                    ))}
+            {career.careerPath?.entryLevel && (
+              <Col xs={24}>
+                <Card
+                  title="Entry Level"
+                  extra={
+                    <Badge
+                      count={career.careerPath.entryLevel.experience}
+                      style={{ backgroundColor: '#52c41a' }}
+                    />
+                  }
+                >
+                  <div className="mb-3">
+                    <Text strong>Typical Roles:</Text>
+                    <div>
+                      {career.careerPath.entryLevel.roles?.map(
+                        (role, index) => (
+                          <Tag key={index} className="mr-2 mb-2">
+                            {role}
+                          </Tag>
+                        )
+                      )}
+                    </div>
                   </div>
-                </div>
-                <Paragraph>
-                  Focus on building technical skills and gaining practical
-                  experience in the field.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24}>
-              <Card
-                title="Mid-Level"
-                extra={
-                  <Badge
-                    count="3-5 years"
-                    style={{ backgroundColor: '#1890ff' }}
-                  />
-                }
-              >
-                <div className="mb-3">
-                  <Text strong>Typical Roles:</Text>
-                  <div>
-                    {['Senior Developer', 'Team Lead', 'Project Manager'].map(
-                      (role, index) => (
+                  <Paragraph>
+                    {career.careerPath.entryLevel.description}
+                  </Paragraph>
+                </Card>
+              </Col>
+            )}
+            {career.careerPath?.midLevel && (
+              <Col xs={24}>
+                <Card
+                  title="Mid-Level"
+                  extra={
+                    <Badge
+                      count={career.careerPath.midLevel.experience}
+                      style={{ backgroundColor: '#1890ff' }}
+                    />
+                  }
+                >
+                  <div className="mb-3">
+                    <Text strong>Typical Roles:</Text>
+                    <div>
+                      {career.careerPath.midLevel.roles?.map((role, index) => (
                         <Tag key={index} className="mr-2 mb-2">
                           {role}
                         </Tag>
-                      )
-                    )}
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <Paragraph>
-                  Take on more responsibility and begin to specialize in
-                  specific areas of expertise.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24}>
-              <Card
-                title="Senior Level"
-                extra={
-                  <Badge
-                    count="6-10 years"
-                    style={{ backgroundColor: '#722ed1' }}
-                  />
-                }
-              >
-                <div className="mb-3">
-                  <Text strong>Typical Roles:</Text>
-                  <div>
-                    {[
-                      'Technical Director',
-                      'Department Head',
-                      'Consultant',
-                    ].map((role, index) => (
-                      <Tag key={index} className="mr-2 mb-2">
-                        {role}
-                      </Tag>
-                    ))}
+                  <Paragraph>
+                    {career.careerPath.midLevel.description}
+                  </Paragraph>
+                </Card>
+              </Col>
+            )}
+            {career.careerPath?.seniorLevel && (
+              <Col xs={24}>
+                <Card
+                  title="Senior Level"
+                  extra={
+                    <Badge
+                      count={career.careerPath.seniorLevel.experience}
+                      style={{ backgroundColor: '#722ed1' }}
+                    />
+                  }
+                >
+                  <div className="mb-3">
+                    <Text strong>Typical Roles:</Text>
+                    <div>
+                      {career.careerPath.seniorLevel.roles?.map(
+                        (role, index) => (
+                          <Tag key={index} className="mr-2 mb-2">
+                            {role}
+                          </Tag>
+                        )
+                      )}
+                    </div>
                   </div>
-                </div>
-                <Paragraph>
-                  Lead teams, make strategic decisions, and mentor junior
-                  professionals.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24}>
-              <Card
-                title="Executive Level"
-                extra={
-                  <Badge
-                    count="10+ years"
-                    style={{ backgroundColor: '#fa8c16' }}
-                  />
-                }
-              >
-                <div className="mb-3">
-                  <Text strong>Typical Roles:</Text>
-                  <div>
-                    {[
-                      'Chief Technology Officer',
-                      'VP of Engineering',
-                      'Director',
-                    ].map((role, index) => (
-                      <Tag key={index} className="mr-2 mb-2">
-                        {role}
-                      </Tag>
-                    ))}
+                  <Paragraph>
+                    {career.careerPath.seniorLevel.description}
+                  </Paragraph>
+                </Card>
+              </Col>
+            )}
+            {career.careerPath?.executiveLevel && (
+              <Col xs={24}>
+                <Card
+                  title="Executive Level"
+                  extra={
+                    <Badge
+                      count={career.careerPath.executiveLevel.experience}
+                      style={{ backgroundColor: '#fa8c16' }}
+                    />
+                  }
+                >
+                  <div className="mb-3">
+                    <Text strong>Typical Roles:</Text>
+                    <div>
+                      {career.careerPath.executiveLevel.roles?.map(
+                        (role, index) => (
+                          <Tag key={index} className="mr-2 mb-2">
+                            {role}
+                          </Tag>
+                        )
+                      )}
+                    </div>
                   </div>
-                </div>
-                <Paragraph>
-                  Shape organizational strategy and drive innovation at the
-                  highest levels.
-                </Paragraph>
-              </Card>
-            </Col>
+                  <Paragraph>
+                    {career.careerPath.executiveLevel.description}
+                  </Paragraph>
+                </Card>
+              </Col>
+            )}
           </Row>
 
           <Title level={4}>Required Skills</Title>
           <Row gutter={[24, 24]} className="mb-6">
-            <Col xs={24} md={12}>
-              <Card title="Technical Skills">
+            <Col xs={24}>
+              <Card title="Key Skills">
                 <List
-                  dataSource={[
-                    'Programming languages (Java, Python, etc.)',
-                    'Database management',
-                    'Software development methodologies',
-                    'System architecture',
-                    'Cloud computing',
-                  ]}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <Space>
-                        <CheckCircleOutlined className="text-green-500" />
-                        <Text>{item}</Text>
-                      </Space>
-                    </List.Item>
-                  )}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} md={12}>
-              <Card title="Soft Skills">
-                <List
-                  dataSource={[
-                    'Problem-solving',
-                    'Communication',
-                    'Teamwork',
-                    'Time management',
-                    'Adaptability',
-                  ]}
+                  dataSource={career.skillsRequired}
                   renderItem={(item) => (
                     <List.Item>
                       <Space>
@@ -592,26 +574,15 @@ const CareerDetails = () => {
 
           <Title level={4}>Professional Certifications</Title>
           <Row gutter={[16, 16]}>
-            <Col xs={24} md={12}>
-              <Card>
-                <Title level={5}>AWS Certified Solutions Architect</Title>
-                <Text type="secondary">Amazon Web Services</Text>
-                <Paragraph className="mt-2">
-                  Validates expertise in designing distributed systems on AWS.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} md={12}>
-              <Card>
-                <Title level={5}>
-                  Certified Information Systems Security Professional
-                </Title>
-                <Text type="secondary">(ISC)²</Text>
-                <Paragraph className="mt-2">
-                  Demonstrates expertise in information security.
-                </Paragraph>
-              </Card>
-            </Col>
+            {career.certifications?.map((cert, index) => (
+              <Col xs={24} md={12} key={index}>
+                <Card>
+                  <Title level={5}>{cert.name}</Title>
+                  <Text type="secondary">{cert.provider}</Text>
+                  <Paragraph className="mt-2">{cert.description}</Paragraph>
+                </Card>
+              </Col>
+            ))}
           </Row>
         </>
       ),
@@ -627,33 +598,13 @@ const CareerDetails = () => {
         <>
           <Title level={4}>Industry Trends</Title>
           <Row gutter={[16, 16]} className="mb-6">
-            <Col xs={24}>
-              <Card title="Growing Demand in Kenya">
-                <Paragraph>
-                  The demand for {career.title} professionals in Kenya has been
-                  steadily increasing over the past 5 years, with a projected
-                  growth rate of 15% annually for the next decade.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24}>
-              <Card title="Digital Transformation">
-                <Paragraph>
-                  As Kenyan businesses undergo digital transformation, the need
-                  for skilled professionals in this field continues to rise,
-                  creating numerous job opportunities.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24}>
-              <Card title="Remote Work Opportunities">
-                <Paragraph>
-                  The global shift to remote work has opened up international
-                  opportunities for Kenyan professionals in this field, allowing
-                  them to work for companies worldwide.
-                </Paragraph>
-              </Card>
-            </Col>
+            {career.industryTrends?.map((trend, index) => (
+              <Col xs={24} key={index}>
+                <Card>
+                  <Paragraph>{trend}</Paragraph>
+                </Card>
+              </Col>
+            ))}
           </Row>
 
           <Title level={4}>Top Employers</Title>
@@ -755,9 +706,11 @@ const CareerDetails = () => {
           <Col xs={24} md={16}>
             <Space className="mb-2">
               <Tag color="blue">{career.category}</Tag>
-              <Tag color={getMatchColor(career.match)}>
-                {career.match}% Match
-              </Tag>
+              {career.match !== undefined && ( // Conditionally display match tag
+                <Tag color={getMatchColor(career.match)}>
+                  {career.match}% Match
+                </Tag>
+              )}
             </Space>
             <Title level={2} className="mb-2">
               {career.title}
@@ -809,61 +762,75 @@ const CareerDetails = () => {
 
         <Col xs={24} lg={8}>
           <Space direction="vertical" className="w-full" size="large">
-            <Card>
-              <Title level={4}>Match Score</Title>
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-1">
-                  <Text>Overall Match</Text>
-                  <Text
-                    strong
-                    style={{
-                      color:
-                        career.match >= 90
-                          ? '#52c41a'
-                          : career.match >= 75
-                          ? '#1890ff'
-                          : career.match >= 60
-                          ? '#fa8c16'
-                          : '#f5222d',
-                    }}
-                  >
-                    {career.match}%
-                  </Text>
+            {career.match !== undefined ? ( // Conditionally display match score card
+              <Card>
+                <Title level={4}>Match Score</Title>
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-1">
+                    <Text>Overall Match</Text>
+                    <Text
+                      strong
+                      style={{
+                        color:
+                          career.match >= 90
+                            ? '#52c41a'
+                            : career.match >= 75
+                            ? '#1890ff'
+                            : career.match >= 60
+                            ? '#fa8c16'
+                            : '#f5222d',
+                      }}
+                    >
+                      {career.match}%
+                    </Text>
+                  </div>
+                  <Progress
+                    percent={career.match}
+                    status="active"
+                    strokeColor={
+                      career.match >= 90
+                        ? '#52c41a'
+                        : career.match >= 75
+                        ? '#1890ff'
+                        : career.match >= 60
+                        ? '#fa8c16'
+                        : '#f5222d'
+                    }
+                  />
                 </div>
-                <Progress
-                  percent={career.match}
-                  status="active"
-                  strokeColor={
-                    career.match >= 90
-                      ? '#52c41a'
-                      : career.match >= 75
-                      ? '#1890ff'
-                      : career.match >= 60
-                      ? '#fa8c16'
-                      : '#f5222d'
-                  }
+
+                <Divider />
+
+                <Title level={5}>Why this is a good match:</Title>
+                <List
+                  dataSource={career.reasons || []} // Use actual reasons from the career object, default to empty array
+                  renderItem={(item) => (
+                    <List.Item>
+                      <Space>
+                        <CheckCircleOutlined className="text-green-500" />
+                        <Text>{item}</Text>
+                      </Space>
+                    </List.Item>
+                  )}
                 />
-              </div>
-
-              <Divider />
-
-              <Title level={5}>Why this is a good match:</Title>
-              <List
-                dataSource={[
-                  'Aligns with your academic strengths',
-                  'High market demand in Kenya',
-                  'Good salary prospects',
-                ]}
-                renderItem={(item) => (
-                  <List.Item>
-                    <Space>
-                      <CheckCircleOutlined className="text-green-500" />
-                      <Text>{item}</Text>
-                    </Space>
-                  </List.Item>
-                )}
-              />
-            </Card>
+              </Card>
+            ) : (
+              <Card className="text-center py-6">
+                <Title level={4} className="mb-4">
+                  Get Your Personalized Match!
+                </Title>
+                <Paragraph className="mb-6">
+                  Want to know how well this career matches your academic
+                  strengths? Get your personalized recommendations now!
+                </Paragraph>
+                <Button
+                  type="primary"
+                  onClick={() => navigate('/input-results')}
+                >
+                  Get Recommendations
+                </Button>
+              </Card>
+            )}
 
             <Card>
               <Title level={4}>Quick Facts</Title>
@@ -872,7 +839,7 @@ const CareerDetails = () => {
                 dataSource={[
                   {
                     title: 'Education Level',
-                    description: "Bachelor's Degree (4 years)",
+                    description: career.programDuration,
                     icon: (
                       <Avatar
                         icon={<GraduationCap size={16} />}
@@ -882,7 +849,7 @@ const CareerDetails = () => {
                   },
                   {
                     title: 'Average Starting Salary',
-                    description: career.salary.entry,
+                    description: career.salary?.entry,
                     icon: (
                       <Avatar
                         icon={<DollarSign size={16} />}
@@ -902,7 +869,10 @@ const CareerDetails = () => {
                   },
                   {
                     title: 'Top Institution',
-                    description: career.institutions[0],
+                    description:
+                      career.institutions && career.institutions.length > 0
+                        ? career.institutions[0].name
+                        : 'N/A',
                     icon: (
                       <Avatar
                         icon={<School size={16} />}

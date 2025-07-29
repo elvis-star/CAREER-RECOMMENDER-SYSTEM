@@ -62,6 +62,33 @@ const UserSchema = new mongoose.Schema(
         ref: 'Career',
       },
     ],
+    // Add pinned careers field
+    pinnedCareers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Career',
+      },
+    ],
+    // Add career ratings field
+    careerRatings: [
+      {
+        careerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Career',
+          required: true,
+        },
+        rating: {
+          type: Number,
+          required: true,
+          min: 1,
+          max: 5,
+        },
+        ratedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     preferences: {
       interests: [String],
       skills: [String],
@@ -204,7 +231,7 @@ UserSchema.method(
     return this.deleteOne();
   },
   { suppressWarning: true }
-); // This suppresses the Mongoose warning
+);
 
 const User = mongoose.model('User', UserSchema);
 

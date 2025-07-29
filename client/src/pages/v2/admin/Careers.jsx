@@ -443,8 +443,7 @@ const CareerManagement = () => {
 
   // Bulk delete careers mutation
   const bulkDeleteCareersMutation = useMutation({
-    mutationFn: (careerIds) =>
-      api.post('/admin/careers/bulk-delete', { careerIds }),
+    mutationFn: (careerIds) => api.post('/careers/bulk-delete', { careerIds }),
     onSuccess: () => {
       notification.success({
         message: 'Careers Deleted',
@@ -467,7 +466,7 @@ const CareerManagement = () => {
   // Bulk update featured status mutation
   const bulkUpdateFeaturedMutation = useMutation({
     mutationFn: ({ careerIds, featured }) =>
-      api.post('/admin/careers/bulk-update-featured', { careerIds, featured }),
+      api.post('/careers/bulk-update-featured', { careerIds, featured }),
     onSuccess: (_, variables) => {
       notification.success({
         message: 'Careers Updated',
@@ -492,9 +491,9 @@ const CareerManagement = () => {
   // Import careers mutation
   const importCareersMutation = useMutation({
     mutationFn: (careersData) =>
-      api.post('/admin/careers/import', { careers: careersData }),
+      api.post('/careers/import', { careers: careersData }),
     onSuccess: (response) => {
-      const { success, failed } = response.data;
+      const { success, failed } = response.data.data; // Access data.data as per backend response
       notification.success({
         message: 'Import Successful',
         description: `Successfully imported ${success} careers. ${
@@ -522,7 +521,7 @@ const CareerManagement = () => {
   // Duplicate career mutation
   const duplicateCareerMutation = useMutation({
     mutationFn: ({ careerId, newTitle }) =>
-      api.post(`/admin/careers/${careerId}/duplicate`, { newTitle }),
+      api.post(`/careers/${careerId}/duplicate`, { newTitle }),
     onSuccess: () => {
       notification.success({
         message: 'Career Duplicated',
@@ -577,9 +576,11 @@ const CareerManagement = () => {
       minimumMeanGrade: career.minimumMeanGrade,
       marketDemand: career.marketDemand,
       jobProspects: career.jobProspects || [],
-      entryLevelSalary: career.salary?.entry,
-      midLevelSalary: career.salary?.mid,
-      seniorLevelSalary: career.salary?.senior,
+      salary: {
+        entry: career.salary?.entry,
+        mid: career.salary?.mid,
+        senior: career.salary?.senior,
+      },
       programDuration: career.programDuration,
       skillsRequired: career.skillsRequired || [],
       entryLevelRoles: career.careerPath?.entryLevel?.roles || [],
@@ -596,7 +597,7 @@ const CareerManagement = () => {
       executiveLevelDescription: career.careerPath?.executiveLevel?.description,
       industryTrends: career.industryTrends || [],
       featured: career.featured || false,
-      image: career.image,
+      image: career.image, // Now this will be a Cloudinary URL
     });
 
     setCareerModalVisible(true);
@@ -710,7 +711,8 @@ const CareerManagement = () => {
           featured: false,
         });
         break;
-      case 'compare':
+      case 'compare': {
+        // Added block scope here to fix the error
         const selectedCareers = careers.filter((career) =>
           selectedRowKeys.includes(career._id)
         );
@@ -724,6 +726,7 @@ const CareerManagement = () => {
           });
         }
         break;
+      }
       default:
         break;
     }
@@ -2059,7 +2062,7 @@ const CareerManagement = () => {
                 uploadPreset: 'career-recommender',
                 multiple: false,
                 maxImageFileSize: 2000000,
-                folder: 'careers',
+                folder: 'cms/careers',
               }}
               onUploadSuccess={handleImageUpload}
               setLoading={setLoading}
@@ -3396,7 +3399,8 @@ const CareerManagement = () => {
         onCancel={() => setCareerModalVisible(false)}
         footer={null}
         width={800}
-        destroyOnClose
+        // REMOVED destroyOnClose to keep all form fields mounted and retain data
+        // destroyOnClose
       >
         <Form
           form={form}

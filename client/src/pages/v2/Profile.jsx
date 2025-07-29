@@ -383,7 +383,7 @@ const Profile = () => {
                       uploadPreset: 'career-recommender',
                       multiple: false,
                       maxImageFileSize: 2000000,
-                      folder: 'profiles',
+                      folder: 'cms/profiles',
                     }}
                     onUploadSuccess={handleProfileImageUpload}
                     setLoading={setLoading}

@@ -181,10 +181,23 @@ export const getInstitutions = async (req, res, next) => {
 
     // Pagination
     const page = Number.parseInt(req.query.page, 10) || 1;
-    const limit = Number.parseInt(req.query.limit, 10) || 10;
+    const limit = Number.parseInt(req.query.limit, 10) || 25;
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
-    const total = await Institution.countDocuments(query);
+
+    // Get total count for pagination
+    const totalQuery = Institution.find(JSON.parse(queryStr));
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      totalQuery.or([
+        { name: searchRegex },
+        { type: searchRegex },
+        { 'location.city': searchRegex },
+        { description: searchRegex },
+        { 'programs.name': searchRegex },
+      ]);
+    }
+    const total = await totalQuery.countDocuments();
 
     query = query.skip(startIndex).limit(limit);
 
@@ -262,6 +275,16 @@ export const getInstitution = async (req, res, next) => {
 // @access  Private/Admin
 export const createInstitution = async (req, res, next) => {
   try {
+    // Handle file uploads if present
+    if (req.files) {
+      if (req.files.logo && req.files.logo[0]) {
+        req.body.logo = req.files.logo[0].path;
+      }
+      if (req.files.images) {
+        req.body.images = req.files.images.map((file) => file.path);
+      }
+    }
+
     // Cast data to appropriate types
     const castedData = castInstitutionData(req.body);
 
@@ -269,13 +292,18 @@ export const createInstitution = async (req, res, next) => {
     const institution = await Institution.create(castedData);
 
     // Log activity
-    await Activity.create({
-      user: req.user._id,
-      action: 'admin_action',
-      details: { action: 'create_institution', institutionId: institution._id },
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    });
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'create_institution',
+          institutionId: institution._id,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -300,6 +328,16 @@ export const updateInstitution = async (req, res, next) => {
       );
     }
 
+    // Handle file uploads if present
+    if (req.files) {
+      if (req.files.logo && req.files.logo[0]) {
+        req.body.logo = req.files.logo[0].path;
+      }
+      if (req.files.images) {
+        req.body.images = req.files.images.map((file) => file.path);
+      }
+    }
+
     // Cast data to appropriate types
     const castedData = castInstitutionData(req.body);
 
@@ -314,13 +352,15 @@ export const updateInstitution = async (req, res, next) => {
     );
 
     // Log activity
-    await Activity.create({
-      user: req.user._id,
-      action: 'admin_action',
-      details: { action: 'update_institution', institutionId: req.params.id },
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    });
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: { action: 'update_institution', institutionId: req.params.id },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -345,16 +385,18 @@ export const deleteInstitution = async (req, res, next) => {
       );
     }
 
-    await institution.deleteOne(); // Using deleteOne instead of remove which is deprecated
+    await institution.deleteOne();
 
     // Log activity
-    await Activity.create({
-      user: req.user._id,
-      action: 'admin_action',
-      details: { action: 'delete_institution', institutionId: req.params.id },
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    });
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: { action: 'delete_institution', institutionId: req.params.id },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -414,17 +456,19 @@ export const addProgram = async (req, res, next) => {
     await institution.save();
 
     // Log activity
-    await Activity.create({
-      user: req.user._id,
-      action: 'admin_action',
-      details: {
-        action: 'add_program',
-        institutionId: req.params.id,
-        programName: programData.name,
-      },
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    });
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'add_program',
+          institutionId: req.params.id,
+          programName: programData.name,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -502,17 +546,19 @@ export const updateProgram = async (req, res, next) => {
     await institution.save();
 
     // Log activity
-    await Activity.create({
-      user: req.user._id,
-      action: 'admin_action',
-      details: {
-        action: 'update_program',
-        institutionId: req.params.id,
-        programId: req.params.programId,
-      },
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    });
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'update_program',
+          institutionId: req.params.id,
+          programId: req.params.programId,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -553,17 +599,19 @@ export const deleteProgram = async (req, res, next) => {
     await institution.save();
 
     // Log activity
-    await Activity.create({
-      user: req.user._id,
-      action: 'admin_action',
-      details: {
-        action: 'delete_program',
-        institutionId: req.params.id,
-        programId: req.params.programId,
-      },
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    });
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'delete_program',
+          institutionId: req.params.id,
+          programId: req.params.programId,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -634,17 +682,19 @@ export const updateFeaturedStatus = async (req, res, next) => {
     await institution.save();
 
     // Log activity
-    await Activity.create({
-      user: req.user._id,
-      action: 'admin_action',
-      details: {
-        action: 'update_featured_status',
-        institutionId: req.params.id,
-        featured: featuredBoolean,
-      },
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    });
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'update_featured_status',
+          institutionId: req.params.id,
+          featured: featuredBoolean,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -699,6 +749,241 @@ export const getInstitutionStats = async (req, res, next) => {
         programsCount: stats[0].programsCount[0]?.total || 0,
         recentlyAdded: stats[0].recentlyAdded,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Bulk delete institutions
+// @route   POST /api/institutions/bulk-delete
+// @access  Private/Admin
+export const bulkDeleteInstitutions = async (req, res, next) => {
+  try {
+    const { institutionIds } = req.body;
+
+    if (
+      !institutionIds ||
+      !Array.isArray(institutionIds) ||
+      institutionIds.length === 0
+    ) {
+      return next(createError('Please provide valid institution IDs', 400));
+    }
+
+    // Delete institutions
+    const result = await Institution.deleteMany({
+      _id: { $in: institutionIds },
+    });
+
+    // Log activity
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'bulk_delete_institutions',
+          count: result.deletedCount,
+          institutionIds,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully deleted ${result.deletedCount} institutions`,
+      data: { deletedCount: result.deletedCount },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Bulk update featured status
+// @route   POST /api/institutions/bulk-update-featured
+// @access  Private/Admin
+export const bulkUpdateFeatured = async (req, res, next) => {
+  try {
+    const { institutionIds, featured } = req.body;
+
+    if (
+      !institutionIds ||
+      !Array.isArray(institutionIds) ||
+      institutionIds.length === 0
+    ) {
+      return next(createError('Please provide valid institution IDs', 400));
+    }
+
+    const featuredBoolean = featured === true || featured === 'true';
+
+    // Update institutions
+    const result = await Institution.updateMany(
+      { _id: { $in: institutionIds } },
+      { featured: featuredBoolean }
+    );
+
+    // Log activity
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'bulk_update_featured',
+          count: result.modifiedCount,
+          featured: featuredBoolean,
+          institutionIds,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully updated ${result.modifiedCount} institutions`,
+      data: { modifiedCount: result.modifiedCount },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Import institutions
+// @route   POST /api/institutions/import
+// @access  Private/Admin
+export const importInstitutions = async (req, res, next) => {
+  try {
+    const { institutions } = req.body;
+
+    if (
+      !institutions ||
+      !Array.isArray(institutions) ||
+      institutions.length === 0
+    ) {
+      return next(createError('Please provide valid institutions data', 400));
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors = [];
+
+    for (const institutionData of institutions) {
+      try {
+        // Cast and validate data
+        const castedData = castInstitutionData(institutionData);
+
+        // Check if institution already exists
+        const existingInstitution = await Institution.findOne({
+          name: castedData.name,
+        });
+        if (existingInstitution) {
+          failedCount++;
+          errors.push(`Institution "${castedData.name}" already exists`);
+          continue;
+        }
+
+        await Institution.create(castedData);
+        successCount++;
+      } catch (error) {
+        failedCount++;
+        errors.push(
+          `Failed to import "${institutionData.name}": ${error.message}`
+        );
+      }
+    }
+
+    // Log activity
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'import_institutions',
+          successCount,
+          failedCount,
+          totalCount: institutions.length,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Import completed. ${successCount} successful, ${failedCount} failed`,
+      data: {
+        success: successCount,
+        failed: failedCount,
+        errors: errors.slice(0, 10), // Limit errors to first 10
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Duplicate institution
+// @route   POST /api/institutions/:id/duplicate
+// @access  Private/Admin
+export const duplicateInstitution = async (req, res, next) => {
+  try {
+    const { newName } = req.body;
+    const originalInstitution = await Institution.findById(req.params.id);
+
+    if (!originalInstitution) {
+      return next(
+        createError(`Institution not found with id of ${req.params.id}`, 404)
+      );
+    }
+
+    if (!newName) {
+      return next(
+        createError('Please provide a new name for the duplicate', 400)
+      );
+    }
+
+    // Check if new name already exists
+    const existingInstitution = await Institution.findOne({ name: newName });
+    if (existingInstitution) {
+      return next(
+        createError('An institution with this name already exists', 400)
+      );
+    }
+
+    // Create duplicate
+    const duplicateData = originalInstitution.toObject();
+    delete duplicateData._id;
+    delete duplicateData.createdAt;
+    delete duplicateData.updatedAt;
+    delete duplicateData.__v;
+
+    duplicateData.name = newName;
+    duplicateData.featured = false; // New duplicates are not featured by default
+    duplicateData.views = 0; // Reset views
+
+    const duplicatedInstitution = await Institution.create(duplicateData);
+
+    // Log activity
+    if (req.user) {
+      await Activity.create({
+        user: req.user._id,
+        action: 'admin_action',
+        details: {
+          action: 'duplicate_institution',
+          originalId: req.params.id,
+          duplicateId: duplicatedInstitution._id,
+          newName,
+        },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Institution duplicated successfully',
+      data: duplicatedInstitution,
     });
   } catch (error) {
     next(error);

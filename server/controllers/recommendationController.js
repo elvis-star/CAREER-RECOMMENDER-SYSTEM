@@ -103,139 +103,6 @@ const calculateMatchScore = (kcseResults, career) => {
   return finalScore;
 };
 
-// @desc    Generate career recommendations
-// @route   POST /api/recommendations
-// @access  Public
-export const generateRecommendations = async (req, res, next) => {
-  try {
-    const { year, subjects, meanGrade, meanPoints } = req.body.results;
-    if (!subjects || !Array.isArray(subjects) || subjects.length < 7) {
-      return next(
-        createError('Please provide at least 7 subjects with grades', 400)
-      );
-    }
-
-    // Get all careers
-    const careers = await Career.find();
-
-    // Calculate match scores for each career
-    const recommendations = [];
-
-    for (const career of careers) {
-      const match = calculateMatchScore(
-        { year, subjects, meanGrade, meanPoints },
-        career
-      );
-
-      // Only include careers with at least 50% match
-      if (match >= 50) {
-        recommendations.push({
-          career: career._id,
-          match,
-          reasons: generateReasons(
-            { year, subjects, meanGrade, meanPoints },
-            career,
-            match
-          ),
-        });
-      }
-    }
-
-    // Sort recommendations by match score (descending)
-    recommendations.sort((a, b) => b.match - a.match);
-
-    // Determine academic strengths
-    const strengths = determineStrengths(subjects);
-
-    // Create recommendation record if user is authenticated
-    if (req.user) {
-      // Save KCSE results to user profile
-      const user = await User.findById(req.user._id);
-      user.kcseResults = {
-        year,
-        meanGrade,
-        meanPoints,
-        subjects,
-      };
-      await user.save();
-
-      // Create recommendation record
-      await Recommendation.create({
-        user: req.user._id,
-        kcseResults: {
-          year,
-          meanGrade,
-          meanPoints,
-          subjects,
-        },
-        strengths,
-        recommendations,
-      });
-
-      // Log activity
-      await Activity.create({
-        user: req.user._id,
-        action: 'generate_recommendations',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-      });
-
-      // Send recommendation email
-      try {
-        // Populate career details for the email
-        const topCareers = [];
-        for (const rec of recommendations.slice(0, 3)) {
-          // Top 3 for email
-          const career = await Career.findById(rec.career);
-          topCareers.push({
-            title: career.title,
-            match: rec.match,
-            description: career.description,
-          });
-        }
-
-        await sendRecommendationEmail(user.email, user.name, topCareers);
-      } catch (emailError) {
-        console.error('Failed to send recommendation email:', emailError);
-        // Continue even if email fails
-      }
-    }
-
-    // Populate career details for response
-    const populatedRecommendations = [];
-
-    for (const rec of recommendations.slice(0, 10)) {
-      // Limit to top 10
-      const career = await Career.findById(rec.career);
-      populatedRecommendations.push({
-        id: career._id,
-        title: career.title,
-        match: rec.match,
-        category: career.category,
-        description: career.description,
-        keySubjects: career.keySubjects,
-        institutions: career.institutions,
-        jobProspects: career.jobProspects,
-        marketDemand: career.marketDemand,
-        salary: career.salary,
-        reasons: rec.reasons,
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      studentInfo: {
-        meanGrade,
-        meanPoints,
-        strengths,
-      },
-      recommendations: populatedRecommendations,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // Helper function to generate reasons for recommendation
 const generateReasons = (kcseResults, career, match) => {
   const reasons = [];
@@ -247,13 +114,13 @@ const generateReasons = (kcseResults, career, match) => {
     'B+': 'very good',
     B: 'good',
     'B-': 'good',
-    'C+': 'satisfactory',
-    C: 'average',
-    'C-': 'average',
-    'D+': 'below average',
-    D: 'below average',
-    'D-': 'poor',
-    E: 'poor',
+    'C+': 7,
+    C: 6,
+    'C-': 5,
+    'D+': 4,
+    D: 3,
+    'D-': 2,
+    E: 1,
   };
 
   const performanceLevel = gradeMap[kcseResults.meanGrade] || 'average';
@@ -389,6 +256,142 @@ const determineStrengths = (subjects) => {
   return strengths;
 };
 
+// @desc    Generate career recommendations
+// @route   POST /api/recommendations
+// @access  Public
+export const generateRecommendations = async (req, res, next) => {
+  try {
+    const { year, subjects, meanGrade, meanPoints } = req.body.results;
+    if (!subjects || !Array.isArray(subjects) || subjects.length < 7) {
+      return next(
+        createError('Please provide at least 7 subjects with grades', 400)
+      );
+    }
+
+    // Get all careers
+    const careers = await Career.find();
+
+    // Calculate match scores for each career
+    const recommendations = [];
+
+    for (const career of careers) {
+      const match = calculateMatchScore(
+        { year, subjects, meanGrade, meanPoints },
+        career
+      );
+
+      // Only include careers with at least 50% match
+      if (match >= 50) {
+        recommendations.push({
+          career: career._id,
+          match,
+          reasons: generateReasons(
+            { year, subjects, meanGrade, meanPoints },
+            career,
+            match
+          ),
+        });
+      }
+    }
+
+    // Sort recommendations by match score (descending)
+    recommendations.sort((a, b) => b.match - a.match);
+
+    // Determine academic strengths
+    const strengths = determineStrengths(subjects);
+
+    // Create recommendation record if user is authenticated
+    if (req.user) {
+      // Save KCSE results to user profile
+      const user = await User.findById(req.user._id);
+      user.kcseResults = {
+        year,
+        meanGrade,
+        meanPoints,
+        subjects,
+      };
+      await user.save();
+
+      // Create recommendation record
+      await Recommendation.create({
+        user: req.user._id,
+        kcseResults: {
+          year,
+          meanGrade,
+          meanPoints,
+          subjects,
+        },
+        strengths,
+        recommendations,
+      });
+
+      // Log activity
+      await Activity.create({
+        user: req.user._id,
+        action: 'generate_recommendations',
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      // Send recommendation email
+      try {
+        // Populate career details for the email
+        const topCareers = [];
+        for (const rec of recommendations.slice(0, 3)) {
+          // Top 3 for email
+          const career = await Career.findById(rec.career);
+          topCareers.push({
+            title: career.title,
+            match: rec.match,
+            description: career.description,
+          });
+        }
+
+        await sendRecommendationEmail(user.email, user.name, topCareers);
+      } catch (emailError) {
+        console.error('Failed to send recommendation email:', emailError);
+        // Continue even if email fails
+      }
+    }
+
+    // Populate career details for response, including institutions
+    const populatedRecommendations = [];
+
+    for (const rec of recommendations.slice(0, 10)) {
+      // Limit to top 10
+      const career = await Career.findById(rec.career).populate(
+        'institutions',
+        'name type location.city logo'
+      ); // Populate institution details
+      populatedRecommendations.push({
+        id: career._id,
+        title: career.title,
+        match: rec.match,
+        category: career.category,
+        description: career.description,
+        keySubjects: career.keySubjects,
+        institutions: career.institutions, // Now contains full institution objects
+        jobProspects: career.jobProspects,
+        marketDemand: career.marketDemand,
+        salary: career.salary,
+        reasons: rec.reasons,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      studentInfo: {
+        meanGrade,
+        meanPoints,
+        strengths,
+      },
+      recommendations: populatedRecommendations,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get user's recommendations
 // @route   GET /api/recommendations
 // @access  Private
@@ -401,6 +404,10 @@ export const getUserRecommendations = async (req, res, next) => {
         path: 'recommendations.career',
         select:
           'title category description keySubjects jobProspects marketDemand salary institutions',
+        populate: {
+          path: 'institutions',
+          select: 'name type location.city logo', // Fields to populate from Institution model
+        },
       });
 
     if (!recommendation) {
@@ -421,7 +428,7 @@ export const getUserRecommendations = async (req, res, next) => {
         category: rec.career.category,
         description: rec.career.description,
         keySubjects: rec.career.keySubjects,
-        institutions: rec.career.institutions,
+        institutions: rec.career.institutions, // Now contains full institution objects
         jobProspects: rec.career.jobProspects,
         marketDemand: rec.career.marketDemand,
         salary: rec.career.salary,
@@ -476,6 +483,10 @@ export const getRecommendation = async (req, res, next) => {
       path: 'recommendations.career',
       select:
         'title category description keySubjects jobProspects marketDemand salary institutions',
+      populate: {
+        path: 'institutions',
+        select: 'name type location.city logo', // Fields to populate from Institution model
+      },
     });
 
     if (!recommendation) {
@@ -503,7 +514,7 @@ export const getRecommendation = async (req, res, next) => {
         category: rec.career.category,
         description: rec.career.description,
         keySubjects: rec.career.keySubjects,
-        institutions: rec.career.institutions,
+        institutions: rec.career.institutions, // Now contains full institution objects
         jobProspects: rec.career.jobProspects,
         marketDemand: rec.career.marketDemand,
         salary: rec.career.salary,
@@ -737,12 +748,15 @@ export const updateUserRecommendations = async (req, res, next) => {
       userAgent: req.headers['user-agent'],
     });
 
-    // Populate career details for response
+    // Populate career details for response, including institutions
     const populatedRecommendations = [];
 
     for (const rec of recommendations.slice(0, 10)) {
       // Limit to top 10
-      const career = await Career.findById(rec.career);
+      const career = await Career.findById(rec.career).populate(
+        'institutions',
+        'name type location.city logo'
+      ); // Populate institution details
       populatedRecommendations.push({
         id: career._id,
         title: career.title,
@@ -750,7 +764,7 @@ export const updateUserRecommendations = async (req, res, next) => {
         category: career.category,
         description: career.description,
         keySubjects: career.keySubjects,
-        institutions: career.institutions,
+        institutions: career.institutions, // Now contains full institution objects
         jobProspects: career.jobProspects,
         marketDemand: career.marketDemand,
         salary: career.salary,

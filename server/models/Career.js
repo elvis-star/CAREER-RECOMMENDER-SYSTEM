@@ -137,6 +137,11 @@ const CareerSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    // Explicitly add the image field
+    image: {
+      type: String,
+      default: '', // Default to empty string if no image is provided
+    },
   },
   {
     timestamps: true,

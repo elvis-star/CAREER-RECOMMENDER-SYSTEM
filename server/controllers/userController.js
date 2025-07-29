@@ -1,11 +1,121 @@
 import User from '../models/User.js';
+import Career from '../models/Career.js';
 import Activity from '../models/Activity.js';
 import { createError } from '../utils/errorHandler.js';
 import { sendAccountNotification } from '../utils/email.js';
 
-// @desc    Get all users
-// @route   GET /api/users
-// @access  Private/Admin
+// @desc    Get user profile (for authenticated user)
+// @route   GET /api/users/profile
+// @access  Private
+export const getUserProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .populate('savedCareers', 'title category marketDemand')
+      .populate('pinnedCareers', 'title category marketDemand')
+      .select('-password');
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Pin career
+// @route   POST /api/users/pinned-careers/:careerId
+// @access  Private
+export const pinCareer = async (req, res, next) => {
+  try {
+    const career = await Career.findById(req.params.careerId);
+    if (!career) {
+      return next(
+        createError(`Career not found with id of ${req.params.careerId}`, 404)
+      );
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (user.pinnedCareers.includes(req.params.careerId)) {
+      return next(createError('Career already pinned', 400));
+    }
+
+    user.pinnedCareers.push(req.params.careerId);
+    await user.save();
+
+    // Log activity
+    await Activity.create({
+      user: req.user._id,
+      action: 'pin_career',
+      details: { careerId: req.params.careerId },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Career pinned successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Unpin career
+// @route   DELETE /api/users/pinned-careers/:careerId
+// @access  Private
+export const unpinCareer = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user.pinnedCareers.includes(req.params.careerId)) {
+      return next(createError('Career not in pinned list', 400));
+    }
+
+    user.pinnedCareers = user.pinnedCareers.filter(
+      (id) => id.toString() !== req.params.careerId
+    );
+    await user.save();
+
+    // Log activity
+    await Activity.create({
+      user: req.user._id,
+      action: 'unpin_career',
+      details: { careerId: req.params.careerId },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Career unpinned successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get pinned careers
+// @route   GET /api/users/pinned-careers
+// @access  Private
+export const getPinnedCareers = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).populate(
+      'pinnedCareers',
+      'title category marketDemand minimumMeanGrade description'
+    );
+
+    res.status(200).json({
+      success: true,
+      data: user.pinnedCareers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Keep all your existing functions unchanged
 export const getUsers = async (req, res, next) => {
   try {
     const users = await User.find().select('-password');
@@ -20,9 +130,6 @@ export const getUsers = async (req, res, next) => {
   }
 };
 
-// @desc    Get single user
-// @route   GET /api/users/:id
-// @access  Private/Admin
 export const getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
@@ -42,9 +149,6 @@ export const getUser = async (req, res, next) => {
   }
 };
 
-// @desc    Create user
-// @route   POST /api/users
-// @access  Private/Admin
 export const createUser = async (req, res, next) => {
   try {
     const user = await User.create(req.body);
@@ -58,9 +162,6 @@ export const createUser = async (req, res, next) => {
   }
 };
 
-// @desc    Update user
-// @route   PUT /api/users/:id
-// @access  Private/Admin
 export const updateUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
@@ -91,7 +192,6 @@ export const updateUser = async (req, res, next) => {
       );
     } catch (emailError) {
       console.error('Failed to send account notification email:', emailError);
-      // Continue even if email fails
     }
 
     res.status(200).json({
@@ -103,9 +203,6 @@ export const updateUser = async (req, res, next) => {
   }
 };
 
-// @desc    Delete user
-// @route   DELETE /api/users/:id
-// @access  Private/Admin
 export const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
@@ -127,7 +224,6 @@ export const deleteUser = async (req, res, next) => {
         'Failed to send account deletion notification email:',
         emailError
       );
-      // Continue even if email fails
     }
 
     await user.remove();
@@ -150,22 +246,17 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/users/profile
-// @access  Private
 export const updateProfile = async (req, res, next) => {
   try {
-    // Fields to update
     const fieldsToUpdate = {
       name: req.body.name,
       phone: req.body.phone,
       school: req.body.school,
       graduationYear: req.body.graduationYear,
       bio: req.body.bio,
-      avatar: req.body.avatar, // This will now be a Cloudinary URL
+      avatar: req.body.avatar,
     };
 
-    // Remove undefined fields
     Object.keys(fieldsToUpdate).forEach(
       (key) => fieldsToUpdate[key] === undefined && delete fieldsToUpdate[key]
     );
@@ -184,7 +275,6 @@ export const updateProfile = async (req, res, next) => {
       userAgent: req.headers['user-agent'],
     });
 
-    // Send notification email
     try {
       await sendAccountNotification(
         user.email,
@@ -195,7 +285,6 @@ export const updateProfile = async (req, res, next) => {
         'Failed to send profile update notification email:',
         emailError
       );
-      // Continue even if email fails
     }
 
     res.status(200).json({
@@ -207,9 +296,6 @@ export const updateProfile = async (req, res, next) => {
   }
 };
 
-// @desc    Get user activity
-// @route   GET /api/users/activity
-// @access  Private
 export const getUserActivity = async (req, res, next) => {
   try {
     const activities = await Activity.find({ user: req.user.id })
@@ -226,9 +312,6 @@ export const getUserActivity = async (req, res, next) => {
   }
 };
 
-// @desc    Update user preferences
-// @route   PUT /api/users/preferences
-// @access  Private
 export const updatePreferences = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
@@ -237,12 +320,10 @@ export const updatePreferences = async (req, res, next) => {
       return next(createError('User not found', 404));
     }
 
-    // Update preferences
     if (req.body.interests) user.preferences.interests = req.body.interests;
     if (req.body.skills) user.preferences.skills = req.body.skills;
     if (req.body.locations) user.preferences.locations = req.body.locations;
 
-    // Update notification settings if provided
     if (req.body.notificationSettings) {
       user.preferences.notificationSettings = {
         ...user.preferences.notificationSettings,
@@ -269,21 +350,20 @@ export const updatePreferences = async (req, res, next) => {
   }
 };
 
-// @desc    Save career to user's saved careers
-// @route   POST /api/users/saved-careers/:careerId
-// @access  Private
 export const saveCareer = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     const careerId = req.params.careerId;
 
-    // Check if career is already saved
     if (user.savedCareers.includes(careerId)) {
       return next(createError('Career already saved', 400));
     }
 
     user.savedCareers.push(careerId);
     await user.save();
+
+    // Increment saves count on career
+    await Career.findByIdAndUpdate(careerId, { $inc: { saves: 1 } });
 
     // Log activity
     await Activity.create({
@@ -303,15 +383,11 @@ export const saveCareer = async (req, res, next) => {
   }
 };
 
-// @desc    Remove career from user's saved careers
-// @route   DELETE /api/users/saved-careers/:careerId
-// @access  Private
 export const removeSavedCareer = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     const careerId = req.params.careerId;
 
-    // Check if career is saved
     if (!user.savedCareers.includes(careerId)) {
       return next(createError('Career not saved', 400));
     }
@@ -320,6 +396,9 @@ export const removeSavedCareer = async (req, res, next) => {
       (id) => id.toString() !== careerId
     );
     await user.save();
+
+    // Decrement saves count on career
+    await Career.findByIdAndUpdate(careerId, { $inc: { saves: -1 } });
 
     // Log activity
     await Activity.create({
@@ -339,9 +418,6 @@ export const removeSavedCareer = async (req, res, next) => {
   }
 };
 
-// @desc    Get user's saved careers
-// @route   GET /api/users/saved-careers
-// @access  Private
 export const getSavedCareers = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).populate('savedCareers');
@@ -356,9 +432,6 @@ export const getSavedCareers = async (req, res, next) => {
   }
 };
 
-// @desc    Save KCSE results
-// @route   POST /api/users/kcse-results
-// @access  Private
 export const saveKcseResults = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
@@ -389,9 +462,6 @@ export const saveKcseResults = async (req, res, next) => {
   }
 };
 
-// @desc    Get user's KCSE results
-// @route   GET /api/users/kcse-results
-// @access  Private
 export const getKcseResults = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);

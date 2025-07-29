@@ -47,7 +47,7 @@ export const fetchRecommendationHistoryForUser = async (results) => {
 export const getCareerDetails = async (careerId) => {
   try {
     const response = await api.get(`/careers/${careerId}`);
-    return response.data;
+    return response.data.data;
   } catch (error) {
     throw error;
   }

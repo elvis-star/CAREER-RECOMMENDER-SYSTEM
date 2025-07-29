@@ -76,42 +76,7 @@ export const getCurrentUser = async () => {
   return response.data;
 };
 
-export const updateUserProfile = async (userData) => {
-  const response = await api.put('/users/profile', userData);
-  return response.data;
-};
-
-export const updatePassword = async (passwordData) => {
-  const response = await api.put('/users/update-password', passwordData);
-  return response.data;
-};
-
-export const uploadProfileImage = async (formData) => {
-  const response = await api.post('/users/profile-image', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
-};
-
-// Session management
-export const getUserSessions = async () => {
-  const response = await api.get('/sessions');
-  return response.data;
-};
-
-export const terminateSession = async (sessionId) => {
-  const response = await api.delete(`/sessions/${sessionId}`);
-  return response.data;
-};
-
-export const terminateAllSessions = async () => {
-  const response = await api.delete('/sessions');
-  return response.data;
-};
-
-// Career API calls
+// Career API calls - Updated to match backend routes
 export const fetchCareers = async (params = {}) => {
   const response = await api.get('/careers', { params });
   return response.data;
@@ -137,17 +102,11 @@ export const fetchRelatedCareers = async (id) => {
   return response.data;
 };
 
-export const saveCareer = async (careerId) => {
-  const response = await api.post(`/users/saved-careers/${careerId}`);
+export const fetchCareerStatistics = async () => {
+  const response = await api.get('/careers/statistics');
   return response.data;
 };
 
-export const unsaveCareer = async (careerId) => {
-  const response = await api.delete(`/users/saved-careers/${careerId}`);
-  return response.data;
-};
-
-// NEW CAREER API FUNCTIONS
 export const rateCareer = async (careerId, rating) => {
   const response = await api.post(`/careers/${careerId}/rate`, { rating });
   return response.data;
@@ -158,13 +117,50 @@ export const viewCareer = async (careerId) => {
   return response.data;
 };
 
-export const fetchCareerStats = async () => {
-  const response = await api.get('/careers/stats');
+// User API calls - Updated to match backend routes
+export const fetchUserProfile = async () => {
+  const response = await api.get('/users/profile');
+  return response.data;
+};
+
+export const updateUserProfile = async (userData) => {
+  const response = await api.put('/users/profile', userData);
+  return response.data;
+};
+
+export const updatePassword = async (passwordData) => {
+  const response = await api.put('/users/update-password', passwordData);
+  return response.data;
+};
+
+export const uploadProfileImage = async (imageUrl) => {
+  const response = await api.post('/users/profile-image', { imageUrl });
   return response.data;
 };
 
 export const updateUserPreferences = async (preferences) => {
   const response = await api.put('/users/preferences', preferences);
+  return response.data;
+};
+
+export const getUserPreferences = async () => {
+  const response = await api.get('/users/preferences');
+  return response.data;
+};
+
+// Career interaction API calls
+export const saveCareer = async (careerId) => {
+  const response = await api.post(`/users/saved-careers/${careerId}`);
+  return response.data;
+};
+
+export const unsaveCareer = async (careerId) => {
+  const response = await api.delete(`/users/saved-careers/${careerId}`);
+  return response.data;
+};
+
+export const getSavedCareers = async () => {
+  const response = await api.get('/users/saved-careers');
   return response.data;
 };
 
@@ -178,19 +174,24 @@ export const unpinCareer = async (careerId) => {
   return response.data;
 };
 
-export const compareCareer = async (careerIds) => {
-  const response = await api.post('/careers/compare', { careerIds });
+export const getPinnedCareers = async () => {
+  const response = await api.get('/users/pinned-careers');
   return response.data;
 };
 
-export const exportCareers = async (format, filters) => {
-  const response = await api.post(
-    '/careers/export',
-    { format, filters },
-    {
-      responseType: format === 'pdf' ? 'blob' : 'json',
-    }
-  );
+// Session management
+export const getUserSessions = async () => {
+  const response = await api.get('/users/sessions');
+  return response.data;
+};
+
+export const terminateSession = async (sessionId) => {
+  const response = await api.delete(`/users/sessions/${sessionId}`);
+  return response.data;
+};
+
+export const terminateAllSessions = async () => {
+  const response = await api.delete('/users/sessions');
   return response.data;
 };
 
@@ -212,6 +213,89 @@ export const fetchInstitutionsByLocation = async (city) => {
 
 export const fetchInstitutionsByProgram = async (program) => {
   const response = await api.get(`/institutions/programs/${program}`);
+  return response.data;
+};
+
+export const createInstitution = async (institutionData) => {
+  const response = await api.post('/institutions', institutionData);
+  return response.data;
+};
+
+export const updateInstitution = async (id, institutionData) => {
+  const response = await api.put(`/institutions/${id}`, institutionData);
+  return response.data;
+};
+
+export const deleteInstitution = async (id) => {
+  const response = await api.delete(`/institutions/${id}`);
+  return response.data;
+};
+
+export const updateInstitutionFeaturedStatus = async (id, featured) => {
+  const response = await api.patch(`/institutions/${id}/featured`, {
+    featured,
+  });
+  return response.data;
+};
+
+export const duplicateInstitution = async (id, newName) => {
+  const response = await api.post(`/institutions/${id}/duplicate`, { newName });
+  return response.data;
+};
+
+export const bulkDeleteInstitutions = async (institutionIds) => {
+  const response = await api.post('/institutions/bulk-delete', {
+    institutionIds,
+  });
+  return response.data;
+};
+
+export const bulkUpdateInstitutionsFeatured = async (
+  institutionIds,
+  featured
+) => {
+  const response = await api.post('/institutions/bulk-update-featured', {
+    institutionIds,
+    featured,
+  });
+  return response.data;
+};
+
+export const importInstitutions = async (institutions) => {
+  const response = await api.post('/institutions/import', { institutions });
+  return response.data;
+};
+
+export const getInstitutionStats = async () => {
+  const response = await api.get('/institutions/stats');
+  return response.data;
+};
+
+// Program management API calls
+export const addProgramToInstitution = async (institutionId, programData) => {
+  const response = await api.post(
+    `/institutions/${institutionId}/programs`,
+    programData
+  );
+  return response.data;
+};
+
+export const updateInstitutionProgram = async (
+  institutionId,
+  programId,
+  programData
+) => {
+  const response = await api.put(
+    `/institutions/${institutionId}/programs/${programId}`,
+    programData
+  );
+  return response.data;
+};
+
+export const deleteInstitutionProgram = async (institutionId, programId) => {
+  const response = await api.delete(
+    `/institutions/${institutionId}/programs/${programId}`
+  );
   return response.data;
 };
 
@@ -264,11 +348,6 @@ export const fetchCareerPopularity = async () => {
 
 export const performBackup = async () => {
   const response = await api.post('/admin/backup');
-  return response.data;
-};
-
-export const fetchUserProfile = async () => {
-  const response = await api.get('/users/profile');
   return response.data;
 };
 
