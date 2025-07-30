@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import {
   Typography,
   Card,
@@ -35,7 +37,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import { ClipboardList, GraduationCap, Award, BookOpen } from 'lucide-react';
+import { ClipboardList, GraduationCap, Award } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -116,6 +118,7 @@ const ResultsInput = () => {
   });
 
   const user = currentUserData?.user || authUser;
+  console.log('User In ResultInput:', user);
 
   // Get recommendation history
   const {
@@ -128,7 +131,7 @@ const ResultsInput = () => {
 
   // Initialize form with user's KCSE results if available
   useEffect(() => {
-    if (user?.kcseResults) {
+    if (user?.kcseResults?.subjects && user.kcseResults.subjects.length > 0) {
       setIsEditMode(true);
 
       // Set form values

@@ -292,7 +292,9 @@ const Dashboard = () => {
             >
               <ClipboardList size={16} style={{ marginRight: 8 }} />
               <Link to="/input-results">
-                {user?.kcseResults ? 'Update Results' : 'Input KCSE Results'}
+                {user?.kcseResults?.subjects.length > 0
+                  ? 'Update Results'
+                  : 'Input KCSE Results'}
               </Link>
             </Button>
           </Col>
