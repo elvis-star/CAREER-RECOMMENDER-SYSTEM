@@ -379,7 +379,7 @@ const Profile = () => {
                 {typeof UploadWidget !== 'undefined' && (
                   <UploadWidget
                     uwConfig={{
-                      cloudName: 'victorkib',
+                      cloudName: 'elvistk',
                       uploadPreset: 'career-recommender',
                       multiple: false,
                       maxImageFileSize: 2000000,

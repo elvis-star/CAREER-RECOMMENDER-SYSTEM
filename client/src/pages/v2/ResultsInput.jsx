@@ -128,7 +128,7 @@ const ResultsInput = () => {
 
   // Initialize form with user's KCSE results if available
   useEffect(() => {
-    if (user?.kcseResults) {
+    if (user?.kcseResults.subjects && user?.kcseResults?.subjects.length > 0 ) {
       setIsEditMode(true);
 
       // Set form values

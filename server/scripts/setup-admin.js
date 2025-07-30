@@ -54,7 +54,7 @@ const createAdmin = async () => {
     const admin = await User.create({
       name: 'System Administrator',
       email: process.env.DEFAULT_ADMIN_EMAIL,
-      password: DEFAULT_ADMIN_PASSWORD,
+      password: process.env.DEFAULT_ADMIN_PASSWORD,
       role: 'admin',
       userType: 'admin',
       emailVerified: true,

@@ -368,7 +368,7 @@ const InstitutionForm = ({
             )}
             <UploadWidget
               uwConfig={{
-                cloudName: 'victorkib',
+                cloudName: 'elvistk',
                 uploadPreset: 'career-recommender',
                 multiple: false,
                 maxImageFileSize: 2000000,
@@ -413,7 +413,7 @@ const InstitutionForm = ({
             )}
             <UploadWidget
               uwConfig={{
-                cloudName: 'victorkib',
+                cloudName: 'elvistk',
                 uploadPreset: 'career-recommender',
                 multiple: false,
                 maxImageFileSize: 5000000,

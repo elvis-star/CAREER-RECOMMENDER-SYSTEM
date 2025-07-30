@@ -1202,12 +1202,12 @@ const careersData = [
     marketDemand: "Medium",
     jobProspects: ["Startups", "Small Businesses", "Franchises", "Social Enterprises", "Tech Companies"],
     salary: {
-      entry: "Variable",
-      mid: "Variable",
+      entry: "10000",
+      mid: "70000",
       senior: "Variable",
     },
     institutions: [], // Will be populated later
-    programDuration: "Variable",
+    programDuration: "4 years",
     skillsRequired: ["Business Planning", "Financial Management", "Leadership", "Problem Solving", "Resilience"],
     careerPath: {
       entryLevel: {
