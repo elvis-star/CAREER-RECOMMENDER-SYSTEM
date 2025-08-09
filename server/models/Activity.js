@@ -22,6 +22,7 @@ const ActivitySchema = new mongoose.Schema(
         'view_institution',
         'update_preferences',
         'generate_recommendations',
+        'ml_enhanced_recommendations',
         'update_recommendations',
         'password_reset',
         'email_verification',

@@ -12,7 +12,16 @@
     "seed:delete": "node utils/seeder.js -d",
     "seed-careers": "node scripts/seed-careers.js",
     "seed-careers:force": "node scripts/seed-careers.js --force",
-    "seed-all": "node scripts/seed-all.js --force"
+    "seed-all": "node scripts/seed-all.js --force",
+    "setup-ml-windows": "cd .. && setup_ml_system_windows.bat",
+    "setup-ml-unix": "cd .. && chmod +x setup_ml_system_unix.sh && ./setup_ml_system_unix.sh",
+    "train-models": "./ml_system/ml_env/bin/python ml_system/train_models.py",
+    "train-models-windows": "cd ml_system && ml_env\\Scripts\\python.exe train_models.py",
+    "test": "jest",
+    "test-ml": "./ml_system/ml_env/bin/python ml_system/ml_integration_service.py health_check",
+    "test-ml-windows": "cd ml_system && ml_env\\Scripts\\python.exe ml_integration_service.py health_check",
+    "ml-health": "cd ml_system && ml_env\\Scripts\\python ml_integration_service.py health_check",
+    "ml-status": "cd ml_system && dir models 2>nul || echo No models directory found"
   },
   "keywords": [
     "career",
@@ -43,5 +52,8 @@
     "nodemailer": "^6.9.7",
     "slugify": "^1.6.6",
     "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }

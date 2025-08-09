@@ -27,6 +27,9 @@ import { trackActivity } from './middleware/auth.js';
 import errorHandler from './middleware/errorHandler.js';
 import requestLogger from './middleware/requestLogger.js';
 
+// Import new ML routes
+import mlRecommendationRoutes from './routes/mlRecommendationRoutes.js';
+
 // Load environment variables
 dotenv.config();
 
@@ -108,6 +111,27 @@ app.use('/api/institutions', institutionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
+
+// Add ML routes
+app.use('/api/mlRecommendations', mlRecommendationRoutes);
+
+// ML System health check endpoint
+app.get('/api/ml-health', async (req, res) => {
+  try {
+    const { callMLService } = await import(
+      './controllers/mlEnhancedRecommendationController.js'
+    );
+    const health = await callMLService('health_check');
+    res.json({ success: true, ...health });
+  } catch (error) {
+    res.status(200).json({
+      success: true,
+      healthy: false,
+      status: 'unavailable',
+      error: error.message,
+    });
+  }
+});
 
 // Add health routes
 app.use('/api', healthRoutes);

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import {
   Typography,
   Card,
@@ -35,13 +37,13 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import { ClipboardList, GraduationCap, Award, BookOpen } from 'lucide-react';
+import { ClipboardList, GraduationCap, Award } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  getRecommendations,
-  updateRecommendations,
+  getMLEnhancedRecommendations,
   fetchRecommendationHistoryForUser,
+  updateMLEnhancedRecommendations,
 } from '../../services/recommendationService';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '../../services/authService';
@@ -116,6 +118,7 @@ const ResultsInput = () => {
   });
 
   const user = currentUserData?.user || authUser;
+  console.log('User In ResultInput:', user);
 
   // Get recommendation history
   const {
@@ -128,7 +131,7 @@ const ResultsInput = () => {
 
   // Initialize form with user's KCSE results if available
   useEffect(() => {
-    if (user?.kcseResults.subjects && user?.kcseResults?.subjects.length > 0 ) {
+    if (user?.kcseResults?.subjects && user.kcseResults.subjects.length > 0) {
       setIsEditMode(true);
 
       // Set form values
@@ -256,7 +259,7 @@ const ResultsInput = () => {
 
   // Create new recommendations mutation
   const createMutation = useMutation({
-    mutationFn: (data) => getRecommendations(data),
+    mutationFn: (data) => getMLEnhancedRecommendations(data),
     onSuccess: (data) => {
       messageApi.success({
         content:
@@ -279,14 +282,13 @@ const ResultsInput = () => {
 
   // Update recommendations mutation
   const updateMutation = useMutation({
-    mutationFn: (data) => updateRecommendations(data),
+    mutationFn: (data) => updateMLEnhancedRecommendations(data),
     onSuccess: (data) => {
       messageApi.success({
         content:
           'Results updated successfully. Redirecting to your career recommendations.',
         duration: 3,
       });
-      console.log('Updated Recommendations:', data);
 
       // Navigate to recommendations page
       navigate('/recommendations', { state: { recommendations: data } });
