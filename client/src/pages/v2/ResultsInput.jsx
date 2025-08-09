@@ -41,9 +41,9 @@ import { ClipboardList, GraduationCap, Award } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  getRecommendations,
-  updateRecommendations,
+  getMLEnhancedRecommendations,
   fetchRecommendationHistoryForUser,
+  updateMLEnhancedRecommendations,
 } from '../../services/recommendationService';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '../../services/authService';
@@ -259,7 +259,7 @@ const ResultsInput = () => {
 
   // Create new recommendations mutation
   const createMutation = useMutation({
-    mutationFn: (data) => getRecommendations(data),
+    mutationFn: (data) => getMLEnhancedRecommendations(data),
     onSuccess: (data) => {
       messageApi.success({
         content:
@@ -282,14 +282,13 @@ const ResultsInput = () => {
 
   // Update recommendations mutation
   const updateMutation = useMutation({
-    mutationFn: (data) => updateRecommendations(data),
+    mutationFn: (data) => updateMLEnhancedRecommendations(data),
     onSuccess: (data) => {
       messageApi.success({
         content:
           'Results updated successfully. Redirecting to your career recommendations.',
         duration: 3,
       });
-      console.log('Updated Recommendations:', data);
 
       // Navigate to recommendations page
       navigate('/recommendations', { state: { recommendations: data } });

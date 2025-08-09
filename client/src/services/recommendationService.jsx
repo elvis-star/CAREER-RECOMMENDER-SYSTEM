@@ -1,7 +1,7 @@
 /* eslint-disable no-useless-catch */
 import api from './api';
 
-// Get career recommendations based on KCSE results
+// Existing functions
 export const getRecommendations = async (results) => {
   try {
     const response = await api.post('/recommendations', { results });
@@ -11,7 +11,6 @@ export const getRecommendations = async (results) => {
   }
 };
 
-// Get career recommendations based on KCSE results
 export const updateRecommendations = async (results) => {
   try {
     const response = await api.put(
@@ -24,7 +23,6 @@ export const updateRecommendations = async (results) => {
   }
 };
 
-// Get User career recommendations
 export const fetchRecommendationsForUser = async (results) => {
   try {
     const response = await api.get('/recommendations', { results });
@@ -33,7 +31,7 @@ export const fetchRecommendationsForUser = async (results) => {
     throw error;
   }
 };
-// Get career recommendations Logged In User History
+
 export const fetchRecommendationHistoryForUser = async (results) => {
   try {
     const response = await api.get('/recommendations/history', { results });
@@ -43,7 +41,6 @@ export const fetchRecommendationHistoryForUser = async (results) => {
   }
 };
 
-// Get detailed information about a specific career
 export const getCareerDetails = async (careerId) => {
   try {
     const response = await api.get(`/careers/${careerId}`);
@@ -53,7 +50,6 @@ export const getCareerDetails = async (careerId) => {
   }
 };
 
-// Get all available careers
 export const getAllCareers = async () => {
   try {
     const response = await api.get('/careers');
@@ -63,7 +59,6 @@ export const getAllCareers = async () => {
   }
 };
 
-// Get career statistics
 export const getCareerStatistics = async () => {
   try {
     const response = await api.get('/careers/statistics');
@@ -73,7 +68,6 @@ export const getCareerStatistics = async () => {
   }
 };
 
-// Save user's career preferences
 export const saveCareerPreferences = async (preferences) => {
   try {
     const response = await api.post('/users/preferences', { preferences });
@@ -83,7 +77,6 @@ export const saveCareerPreferences = async (preferences) => {
   }
 };
 
-// Get career trends
 export const getCareerTrends = async () => {
   try {
     const response = await api.get('/careers/trends');
@@ -93,10 +86,65 @@ export const getCareerTrends = async () => {
   }
 };
 
-// Get job market insights
 export const getJobMarketInsights = async () => {
   try {
     const response = await api.get('/careers/job-market');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// New ML-enhanced functions
+export const getMLEnhancedRecommendations = async (results) => {
+  try {
+    const response = await api.post('/mlRecommendations/ml-enhanced', {
+      results,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+//updateRecommendations function
+export const updateMLEnhancedRecommendations = async (results) => {
+  try {
+    const response = await api.put(
+      `/mlRecommendations/ml-enhanced/${results.id}`,
+      {
+        results,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSimilarCareers = async (careerId, limit = 5) => {
+  try {
+    const response = await api.get(
+      `/mlRecommendations/similar/${careerId}?limit=${limit}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getMLCareerTrends = async () => {
+  try {
+    const response = await api.get('/mlRecommendations/trends');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getMLSystemHealth = async () => {
+  try {
+    const response = await api.get('/mlRecommendations/ml-health');
     return response.data;
   } catch (error) {
     throw error;

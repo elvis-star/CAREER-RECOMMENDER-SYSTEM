@@ -36,6 +36,30 @@ const RecommendationSchema = new mongoose.Schema(
           type: Boolean,
           default: false,
         },
+        // Add ML enhancement fields
+        mlEnhanced: {
+          type: Boolean,
+          default: false,
+        },
+        mlScore: {
+          type: Number,
+          min: 0,
+          max: 100,
+        },
+        successProbability: {
+          type: Number,
+          min: 0,
+          max: 1,
+        },
+        mlConfidence: {
+          type: Number,
+          min: 0,
+          max: 100,
+        },
+        improvementSuggestions: {
+          type: [String],
+          default: [],
+        },
       },
     ],
     createdAt: {

@@ -261,7 +261,7 @@ const determineStrengths = (subjects) => {
 // @access  Public
 export const generateRecommendations = async (req, res, next) => {
   try {
-    const { year, subjects, meanGrade, meanPoints } = req.body.results;
+    const { year, subjects, meanGrade, meanPoints } = req.body.results.results;
     if (!subjects || !Array.isArray(subjects) || subjects.length < 7) {
       return next(
         createError('Please provide at least 7 subjects with grades', 400)
