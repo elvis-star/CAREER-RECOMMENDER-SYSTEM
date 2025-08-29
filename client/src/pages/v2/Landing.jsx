@@ -137,7 +137,7 @@ const Landing = () => {
   const testimonials = [
     {
       id: 1,
-      name: 'James Kimani',
+      name: 'Elvis Kibet',
       role: 'Computer Science Student',
       university: 'University of Nairobi',
       location: 'Nairobi, Kenya',
@@ -152,7 +152,7 @@ const Landing = () => {
     },
     {
       id: 2,
-      name: 'Grace Otieno',
+      name: 'Mercy Rop',
       role: 'Career Counselor',
       organization: 'Kenya Education Board',
       location: 'Kisumu, Kenya',
@@ -167,7 +167,7 @@ const Landing = () => {
     },
     {
       id: 3,
-      name: 'Peter Njoroge',
+      name: 'Dan Amaya',
       role: 'Engineering Student',
       university: 'Jomo Kenyatta University',
       location: 'Kiambu, Kenya',
@@ -182,7 +182,7 @@ const Landing = () => {
     },
     {
       id: 4,
-      name: 'Sarah Wanjiku',
+      name: 'Sherly Chebet',
       role: 'Medical Student',
       university: 'University of Nairobi',
       location: 'Nairobi, Kenya',
@@ -415,14 +415,14 @@ const Landing = () => {
                 </Link>
               </Button>
 
-              <Button
+              {/* <Button
                 size="large"
                 className="h-14 px-8 text-lg font-semibold rounded-full bg-white/10 backdrop-blur-md border border-white/30 text-white hover:bg-white/20 hover:border-white/40 shadow-xl transform hover:scale-105 transition-all duration-300"
                 onClick={() => setIsHeroVideoPlaying(true)}
               >
                 <Play size={20} className="mr-2" />
                 Watch Demo
-              </Button>
+              </Button> */}
             </Space>
           </div>
 
@@ -757,7 +757,7 @@ const Landing = () => {
         ref={statsRef}
         className={`
           py-24 relative overflow-hidden
-          ${isDarkMode ? 'bg-gray-900' : 'bg-white'}
+          ${isDarkMode ? 'bg-gray-900' : 'bg-red'}
           transition-all duration-1000 transform
           ${
             isVisible.stats

@@ -14,13 +14,13 @@ const About = () => {
   // Team members data
   const teamMembers = [
     {
-      name: 'Dr. Sarah Johnson',
+      name: 'Dr. Mercy Rop',
       role: 'Founder & CEO',
       image: '/Sarah.png?height=150&width=150',
       bio: 'Ph.D. in Educational Psychology with over 15 years of experience in career counseling and development.',
     },
     {
-      name: 'Michael Omondi',
+      name: 'Elvis Kibet',
       role: 'Lead Career Counselor',
       image: '/michael.png?height=150&width=150',
       bio: 'Former university career advisor with expertise in helping students transition from education to employment.',
@@ -32,7 +32,7 @@ const About = () => {
       bio: 'Specializes in analyzing educational and labor market data to identify emerging career trends in Kenya.',
     },
     {
-      name: 'David Mwangi',
+      name: 'Dan Amaya',
       role: 'Software Engineer',
       image: '/david.png?height=150&width=150',
       bio: 'Full-stack developer passionate about creating tools that make education and career guidance accessible to all.',

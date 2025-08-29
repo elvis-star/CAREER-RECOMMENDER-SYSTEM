@@ -191,7 +191,7 @@ const Register = () => {
               />
             </Form.Item>
 
-            <Form.Item
+            {/* <Form.Item
               name="userType"
               label="I am a"
               rules={[
@@ -205,7 +205,7 @@ const Register = () => {
                 <Option value="counselor">Career Counselor</Option>
                 <Option value="other">Other</Option>
               </Select>
-            </Form.Item>
+            </Form.Item> */}
 
             <Form.Item
               name="password"

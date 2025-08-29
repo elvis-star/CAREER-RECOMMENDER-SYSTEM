@@ -1,0 +1,18 @@
+client=>React- html,css and js
+server=>nodejs, express and python
+database=>mongoDb
+
+user data journey
+enter result => backend recommendation controller (Rule based alogrithim) =>result to client for display purposes.
+
+client=> server=>client
+client=>src=>pages=>v2>ResulsInput=>recommendationservice=>api=>{SERVER.JS=>recommendationRoutes=>recommednationcontroller}=>MONGODB
+                getRecommendations,
+                updateRecommendations,
+                fetchRecommendationHistoryForUser,
+
+training of the model.its as a result of key value pairs 
+{
+    key:value
+}
+rule-based alogrithims

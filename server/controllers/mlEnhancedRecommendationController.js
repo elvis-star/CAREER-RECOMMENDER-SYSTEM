@@ -404,6 +404,7 @@ export const updateMLEnhancedRecommendations = async (req, res, next) => {
     const { id } = req.params;
     const resultsData =
       req.body.results?.results || req.body.results || req.body;
+      console.log('resultsData: ',resultsData)
     const { year, subjects, meanGrade, meanPoints } = resultsData;
 
     if (!subjects || !Array.isArray(subjects) || subjects.length < 7) {
